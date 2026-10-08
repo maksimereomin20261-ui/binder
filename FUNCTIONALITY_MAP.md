@@ -10,7 +10,7 @@
 | Bind metadata: name, hotkey, active, category, stat type | Editor modal + compatible INI storage | Implemented / static review |
 | Ordered multi-line text and per-line delay (`Editor*`, `SendSlot`) | Editor with add/remove/reorder/duplicate, per-line and bulk delay, presets | Implemented / static review |
 | Hotkey capture, display, conflict resolution (`StartHotkeyCapture`, `CheckHotkeyConflict`, `ConfirmReplace`) | `HotkeyManager.ahk`: keyboard `InputHook`, mouse-button/wheel capture, timeout/cancel, conflict checks and replacement confirmation | Implemented / static review |
-| Global/system hotkeys (`RegisterSystemHotkeys`) | Settings capture + `HotkeyManager.ahk`; chat opener, full/mini Overlay, stop, SMS reply, Radial Menu and main window | Implemented / static review |
+| Global/system hotkeys (`RegisterSystemHotkeys`) | Top-bar «Настройки» opens the Hotkeys/Overlay tab; capture + `HotkeyManager.ahk` cover chat opener, full/mini Overlay, stop, SMS reply, Radial Menu and main window | Implemented / static review |
 | Safe game/chat send path (`SafeRunSlot`, `RunSlotByNum`, `SendSlot`) | `Core.ahk`: GTA existence/focus checks, clipboard restoration, variable expansion, jitter, cancellation, and safe activation when “only active GTA” is disabled | Implemented / static review |
 | Stop send + release stuck keys (`StopSending`, `ReleaseStuckKeys`) | Header stop action, configured system hotkey, chunked cancellable waits | Implemented / static review |
 | Built-in/custom variables (`{P}`, `{MY}`, `{HOSPITAL}`, `{RANK}`, `{SPECIALTY}`) | Variable manager, editor quick insert, sender substitutions | Implemented / static review |

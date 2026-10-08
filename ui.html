@@ -170,6 +170,9 @@
         .btn-outline.warning:hover { background: rgba(255,179,0,0.1); }
         .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
         .empty-state i { font-size: 48px; color: #23232c; margin-bottom: 15px; display: block; }
+        .data-load-error { display:flex; flex-direction:column; align-items:center; gap:12px; color:var(--text-muted); }
+        .data-load-error i { color:#ffb300; }
+        .data-load-error .error-detail { max-width:650px; overflow-wrap:anywhere; font-size:11px; line-height:1.5; }
 
         .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
         .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-pink);
@@ -489,6 +492,7 @@
     <div class="top-controls">
         <div class="status-badge"><span class="status-title" id="statusTitle">MedBind • ГОТОВ</span><span class="status-sub" id="statusSub">Подключение к данным…</span><span class="status-clock" id="appClock">--:--:--</span></div>
         <button class="top-action stop-action" id="btnStopSending" title="Остановить текущую отправку"><i class="fa-solid fa-hand"></i><span>Стоп</span></button>
+        <button class="top-action" id="btnSettings" title="Настройки и горячие клавиши Overlay"><i class="fa-solid fa-gear"></i><span>Настройки</span></button>
         <button class="top-action" id="btnStats" title="Статистика"><i class="fa-solid fa-chart-simple"></i><span>Статистика</span></button>
         <button class="top-action" id="btnFilters" title="Управление фильтрами"><i class="fa-solid fa-filter"></i><span>Фильтры</span></button>
         <button class="top-action" id="btnUndo" title="Отменить последнее действие (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
@@ -599,6 +603,8 @@ let filterOriginalName = '';
 let settingsDraftDirty = false;
 let settingsRuleRows = [];
 let nextRuleRowId = 1;
+let initialDataLoaded = false;
+let dataLoadTimer = null;
 
 const categoryIcons = {
  'Основные':'fa-comment','Лечение':'fa-heart-pulse','Медосмотр':'fa-clipboard-list','Вакцины':'fa-syringe',
@@ -612,14 +618,55 @@ function post(message) {
 
 if (window.chrome && window.chrome.webview) {
  window.chrome.webview.addEventListener('message', event => handleHostMessage(event.data));
- post('request_data');
+ requestData();
 } else {
- document.getElementById('bindsList').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>WebView2 не найден</div>';
+ showDataLoadError('WebView2 не найден. Запустите MedBind через приложение.');
+}
+
+function requestData() {
+ if (!(window.chrome && window.chrome.webview)) {
+  showDataLoadError('WebView2 не найден. Запустите MedBind через приложение.');
+  return;
+ }
+ if (!initialDataLoaded) {
+  document.getElementById('bindsList').innerHTML='<div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i>Загрузка биндов…</div>';
+  document.getElementById('bindsCount').textContent='Загрузка…';
+  document.getElementById('categoryList').innerHTML='<li class="menu-item active">Загрузка…</li>';
+ }
+ post('request_data');
+ clearTimeout(dataLoadTimer);
+ dataLoadTimer=setTimeout(()=>{
+  if (!initialDataLoaded) showDataLoadError('Ответ от ядра MedBind не получен за 8 секунд. Проверьте запуск скрипта и перезапустите приложение.');
+ },8000);
+}
+
+function showDataLoadError(message) {
+ clearTimeout(dataLoadTimer);dataLoadTimer=null;
+ const list=document.getElementById('bindsList');
+ if (list) {
+  list.replaceChildren();
+  const state=document.createElement('div');state.className='empty-state data-load-error';
+  const icon=document.createElement('i');icon.className='fa-solid fa-triangle-exclamation';
+  const title=document.createElement('strong');title.textContent='Не удалось загрузить бинды';
+  const detail=document.createElement('span');detail.className='error-detail';detail.textContent=String(message||'Неизвестная ошибка');
+  const retry=document.createElement('button');retry.className='btn-outline';retry.type='button';retry.textContent='Повторить';retry.onclick=requestData;
+  state.append(icon,title,detail,retry);list.appendChild(state);
+ }
+ const count=document.getElementById('bindsCount');if(count)count.textContent='Ошибка загрузки';
+ const categories=document.getElementById('categoryList');if(categories)categories.innerHTML='<li class="menu-item active">Ошибка загрузки</li>';
 }
 
 function handleHostMessage(data) {
  if (typeof data !== 'string') {
-  if (data && Array.isArray(data.binds)) renderData(data);
+  if (data && Array.isArray(data.binds)) {
+   try { renderData(data); }
+   catch (error) { console.error('Не удалось отобразить данные MedBind',error); showDataLoadError('Ошибка отображения данных: '+(error?.message||error)); }
+  }
+  return;
+ }
+ if (data.startsWith('data_error:')) {
+  const reason=data.slice('data_error:'.length)||'Ошибка сериализации данных в MedBind';
+  if (initialDataLoaded) showToast('Ошибка обновления данных: '+reason,'error'); else showDataLoadError(reason);
   return;
  }
  if (data.startsWith('status:')) { parseStatus(data.slice(7)); return; }
@@ -648,7 +695,15 @@ function handleHostMessage(data) {
  if (data.startsWith('settings_conflict_bind:')) { showToast('Системная клавиша конфликтует со слотом '+data.slice('settings_conflict_bind:'.length)+'; назначьте бинду другую клавишу','error'); return; }
  if (data.startsWith('folder_selected:')) { handleFolderSelected(data); return; }
  if (data === 'settings_reset') { settingsDraftDirty=false; populateSettings(); showToast('Настройки сброшены к значениям по умолчанию','success'); return; }
- try { renderData(JSON.parse(data)); } catch {}
+ const payloadText=data.trim();
+ if (payloadText.startsWith('{') || payloadText.startsWith('[')) {
+  try { renderData(JSON.parse(payloadText)); }
+  catch (error) {
+   console.error('Не удалось разобрать или отобразить данные MedBind',error);
+   if (!initialDataLoaded) showDataLoadError('Ошибка ответа MedBind: '+(error?.message||error));
+   else showToast('Не удалось обновить список: '+(error?.message||error),'error');
+  }
+ }
 }
 
 function parseStatus(text) {
@@ -664,7 +719,8 @@ function parseStatus(text) {
 }
 
 function renderData(data) {
- ALL_BINDS=Array.isArray(data.binds)?data.binds:[];
+ if(!data||!Array.isArray(data.binds))throw new TypeError('Ответ MedBind не содержит массив binds');
+ ALL_BINDS=data.binds;
  EMPTY_SLOTS=Array.isArray(data.emptySlots)?data.emptySlots:[];
  FILTERS=Array.isArray(data.filters)?data.filters:[];
  USER_VARS=Array.isArray(data.variables)?data.variables:[];
@@ -679,6 +735,9 @@ function renderData(data) {
  document.getElementById('btnSaveAll').classList.toggle('dirty',GLOBAL_DIRTY);
  if(isModalOpen('statsModal'))renderStats();
  if(isModalOpen('filtersModal'))renderFilterSelector();
+ if(isModalOpen('settingsModal')&&!settingsDraftDirty)populateSettings();
+ initialDataLoaded=true;
+ clearTimeout(dataLoadTimer);dataLoadTimer=null;
 }
 
 function updatePatientDisplay(id) {
@@ -862,7 +921,7 @@ function saveFilter(){const name=document.getElementById('filterName').value.tri
 function deleteFilter(){const name=document.getElementById('filterExisting').value;if(!name)return;if(!confirm('Удалить фильтр «'+name+'»?'))return;post(['delete_filter',name].join(US));}
 
 const hotkeyLabels=[['overlay','Полный Overlay'],['miniOverlay','Mini Overlay'],['stopSending','Остановить отправку'],['replySms','Ответить на SMS'],['wheel','Радиальное меню (удерживать)'],['mainGui','Показать / скрыть окно']];
-function openSettings(){settingsDraftDirty=false;populateSettings();switchSettingsTab('general');openModal('settingsModal');}
+function openSettings(tab='general'){settingsDraftDirty=false;populateSettings();switchSettingsTab(tab);openModal('settingsModal');}
 function populateSettings(){const h=SETTINGS.hotkeys||{};document.getElementById('chatKeyCapture').value=SETTINGS.chatKey||'t';document.getElementById('patientFormat').value=SETTINGS.patientFormat||'plain';document.getElementById('onlyGTA').checked=!!SETTINGS.onlyGTA;document.getElementById('baseDelay').value=SETTINGS.baseDelay??2300;document.getElementById('afterChatDelay').value=SETTINGS.afterChatDelay??300;document.getElementById('afterEnterDelay').value=SETTINGS.afterEnterDelay??400;document.getElementById('jitter').value=SETTINGS.jitter??200;document.getElementById('overlayOpacity').value=SETTINGS.overlayOpacity??245;document.getElementById('opacityValue').textContent=SETTINGS.overlayOpacity??245;document.getElementById('editorAutoSaveDelay').checked=!!SETTINGS.editorAutoSaveDelay;document.getElementById('notifySms').checked=!!SETTINGS.notifySms;document.getElementById('notifyMention').checked=!!SETTINGS.notifyMention;document.getElementById('notifyKeywords').checked=!!SETTINGS.notifyKeywords;document.getElementById('autoScreen').checked=!!SETTINGS.autoScreen;document.getElementById('enableWheel').checked=!!SETTINGS.enableWheel;
  const grid=document.getElementById('hotkeySettingsGrid');grid.innerHTML=hotkeyLabels.map(([name,label])=>`<div class="system-hotkey-row"><label>${escapeHtml(label)}</label><div class="capture-setting"><input id="hk-${name}" readonly value="${escapeHtml(h[name]||'')}" data-setting-hotkey="${name}"><button class="hk-btn" data-capture="system:${name}" title="Захватить клавишу"><i class="fa-solid fa-keyboard"></i></button><button class="hk-btn clear" data-clear-capture="system:${name}" title="Очистить"><i class="fa-solid fa-eraser"></i></button></div><small class="system-hotkey-hint" id="hint-${name}"></small></div>`).join('');grid.querySelectorAll('[data-capture]').forEach(b=>b.onclick=()=>startCapture(b.dataset.capture,document.getElementById('hk-'+b.dataset.capture.slice(7))));grid.querySelectorAll('[data-clear-capture]').forEach(b=>b.onclick=()=>clearCapture(b.dataset.clearCapture));document.getElementById('chatKeyCapture').onclick=()=>startCapture('system:chatKey',document.getElementById('chatKeyCapture'));document.querySelector('[data-capture="system:chatKey"]').onclick=()=>startCapture('system:chatKey',document.getElementById('chatKeyCapture'));document.querySelector('[data-clear-capture="system:chatKey"]').onclick=()=>clearCapture('system:chatKey');
  populateWheelSelects();settingsRuleRows=(SETTINGS.screenRules||[]).map(r=>({...r,_id:nextRuleRowId++}));renderScreenRules();updateSettingsHotkeyHints();}
@@ -873,7 +932,7 @@ function markSettingsDirty(){settingsDraftDirty=true;}
 function switchSettingsTab(tab){document.querySelectorAll('.settings-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.settingsTab===tab));document.querySelectorAll('.settings-page').forEach(p=>p.classList.toggle('active',p.dataset.settingsPage===tab));}
 function applyDelayPreset(name){const preset={fast:[1200,150,200,50],norm:[2300,300,400,200],rp:[4500,600,800,500]}[name];if(!preset)return;['baseDelay','afterChatDelay','afterEnterDelay','jitter'].forEach((id,i)=>document.getElementById(id).value=preset[i]);markSettingsDirty();}
 function updateSettingsHotkeyHints(){const h={overlay:'Полный Overlay',miniOverlay:'Mini Overlay',stopSending:'Остановить отправку',replySms:'Ответить на SMS',wheel:'Радиальное меню',mainGui:'Главное окно'};const values={};hotkeyLabels.forEach(([name])=>values[name]=document.getElementById('hk-'+name)?.value||'');hotkeyLabels.forEach(([name,label])=>{const key=normalizeKey(values[name]);const el=document.getElementById('hint-'+name);const input=document.getElementById('hk-'+name);if(!el||!input)return;const conflict=hotkeyLabels.find(([other])=>other!==name&&key&&normalizeKey(values[other]).toLowerCase()===key.toLowerCase());const chat=key&&(normalizeKey(document.getElementById('chatKeyCapture').value).toLowerCase()===key.toLowerCase()||key.toLowerCase()==='sc029');const bind=key&&ALL_BINDS.find(b=>normalizeKey(b.hotkey).toLowerCase()===key.toLowerCase());if(conflict||chat||bind){el.textContent=conflict?'Конфликт с '+h[conflict[0]]:chat?'Конфликт с клавишей чата':`Занято биндом «${bind.name}»`;input.classList.add('conflict');}else{el.textContent=key?'Клавиша свободна':'Клавиша отключена';input.classList.remove('conflict');}});}
-function saveSettings(){const h={};hotkeyLabels.forEach(([name])=>h[name]=document.getElementById('hk-'+name).value.trim());const parts=['save_settings',document.getElementById('chatKeyCapture').value.trim(),document.getElementById('onlyGTA').checked?'1':'0',document.getElementById('patientFormat').value,document.getElementById('baseDelay').value,document.getElementById('afterChatDelay').value,document.getElementById('afterEnterDelay').value,document.getElementById('jitter').value,document.getElementById('overlayOpacity').value,document.getElementById('notifySms').checked?'1':'0',document.getElementById('notifyMention').checked?'1':'0',document.getElementById('notifyKeywords').checked?'1':'0',document.getElementById('editorAutoSaveDelay').checked?'1':'0',document.getElementById('autoScreen').checked?'1':'0',document.getElementById('enableWheel').checked?'1':'0',h.overlay,h.miniOverlay,h.stopSending,h.replySms,h.wheel,h.mainGui,document.getElementById('wheelTop').value,document.getElementById('wheelRight').value,document.getElementById('wheelBottom').value,document.getElementById('wheelLeft').value,String(settingsRuleRows.length)];settingsRuleRows.forEach(r=>parts.push((r.name||'').trim(),(r.phrase||'').trim(),(r.path||'').trim()));post(parts.join(US));}
+function saveSettings(){if(!initialDataLoaded){showToast('Настройки ещё не загружены. Повторите запрос данных и попробуйте снова.','warning');requestData();return;}const h={};hotkeyLabels.forEach(([name])=>h[name]=document.getElementById('hk-'+name).value.trim());const parts=['save_settings',document.getElementById('chatKeyCapture').value.trim(),document.getElementById('onlyGTA').checked?'1':'0',document.getElementById('patientFormat').value,document.getElementById('baseDelay').value,document.getElementById('afterChatDelay').value,document.getElementById('afterEnterDelay').value,document.getElementById('jitter').value,document.getElementById('overlayOpacity').value,document.getElementById('notifySms').checked?'1':'0',document.getElementById('notifyMention').checked?'1':'0',document.getElementById('notifyKeywords').checked?'1':'0',document.getElementById('editorAutoSaveDelay').checked?'1':'0',document.getElementById('autoScreen').checked?'1':'0',document.getElementById('enableWheel').checked?'1':'0',h.overlay,h.miniOverlay,h.stopSending,h.replySms,h.wheel,h.mainGui,document.getElementById('wheelTop').value,document.getElementById('wheelRight').value,document.getElementById('wheelBottom').value,document.getElementById('wheelLeft').value,String(settingsRuleRows.length)];settingsRuleRows.forEach(r=>parts.push((r.name||'').trim(),(r.phrase||'').trim(),(r.path||'').trim()));post(parts.join(US));}
 
 function openModal(id){document.getElementById(id).style.display='flex';}
 function closeModal(id){const node=document.getElementById(id);if(node)node.style.display='none';}
@@ -881,7 +940,7 @@ function requestCloseModal(id){if(id==='settingsModal'&&settingsDraftDirty&&!con
 function isModalOpen(id){return document.getElementById(id)?.style.display==='flex';}
 document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>requestCloseModal(b.dataset.close)));
 document.getElementById('btnClose').onclick=()=>sendWin('close');document.getElementById('btnMin').onclick=()=>sendWin('min');document.getElementById('btnMax').onclick=()=>sendWin('max');
-document.getElementById('btnSaveAll').onclick=()=>post('save_all');document.getElementById('btnUndo').onclick=()=>post('undo');document.getElementById('btnStopSending').onclick=()=>post('stop_sending');document.getElementById('btnStats').onclick=openStats;document.getElementById('btnHelp').onclick=openHelp;document.getElementById('btnFilters').onclick=openFilterManager;document.getElementById('btnManageFilters').onclick=openFilterManager;document.getElementById('btnVars').onclick=openVars;document.getElementById('btnCreate').onclick=()=>post('create_bind');document.getElementById('binderToggle').onchange=()=>post('toggle_binder');document.getElementById('openProfile').onclick=openProfile;document.getElementById('openPatient').onclick=openPatientModal;document.getElementById('searchInput').addEventListener('input',renderBinds);
+document.getElementById('btnSaveAll').onclick=()=>post('save_all');document.getElementById('btnUndo').onclick=()=>post('undo');document.getElementById('btnStopSending').onclick=()=>post('stop_sending');document.getElementById('btnSettings').onclick=()=>openSettings('hotkeys');document.getElementById('btnStats').onclick=openStats;document.getElementById('btnHelp').onclick=openHelp;document.getElementById('btnFilters').onclick=openFilterManager;document.getElementById('btnManageFilters').onclick=openFilterManager;document.getElementById('btnVars').onclick=openVars;document.getElementById('btnCreate').onclick=()=>post('create_bind');document.getElementById('binderToggle').onchange=()=>post('toggle_binder');document.getElementById('openProfile').onclick=openProfile;document.getElementById('openPatient').onclick=openPatientModal;document.getElementById('searchInput').addEventListener('input',renderBinds);
 document.getElementById('editClose').onclick=()=>closeEditor();document.getElementById('cancelEditor').onclick=()=>closeEditor();document.getElementById('saveEditor').onclick=saveEditor;document.getElementById('undoAll').onclick=undoAll;document.getElementById('undoEditor').onclick=undoEditor;document.getElementById('addEditLine').onclick=addEditLine;document.getElementById('pinBtn').onclick=toggleVarsSticky;document.getElementById('applyDelayAll').onclick=applyDelayToAll;document.getElementById('delayPreset').onchange=e=>{if(e.target.value!=='')document.getElementById('applyDelayValue').value=e.target.value;};
 document.getElementById('editHotkey').onclick=()=>startCapture('bind',document.getElementById('editHotkey'));document.getElementById('editHotkey').onblur=()=>{if(activeCaptureTarget==='bind')stopCapture(true);};document.getElementById('hkUndo').onclick=()=>{pushEditorUndo();editorHotkey=previousEditorHotkey;document.getElementById('editHotkey').value=formatHotkey(editorHotkey);updateHotkeyHint();};document.getElementById('hkClear').onclick=()=>clearCapture('bind');
 function trackEditorField(id,property,eventName,readValue=el=>el.value){const el=document.getElementById(id);el.addEventListener('focus',()=>{el.dataset.undoPrev=String(readValue(el));});el.addEventListener(eventName,()=>{const previous=el.dataset.undoPrev;const current=String(readValue(el));if(previous!==undefined&&previous!==current){const snap=editorState();snap[property]=property==='enabled'?(previous==='true'):previous;pushEditorUndo(snap);}el.dataset.undoPrev=current;});}

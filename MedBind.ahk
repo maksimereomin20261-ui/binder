@@ -263,8 +263,10 @@ PushDataToHtml() {
     if !wv
         return
     try wv.PostWebMessageAsString(BuildJson())
-    catch as err
+    catch as err {
         OutputDebug("Ошибка передачи данных в GUI: " err.Message)
+        try wv.PostWebMessageAsString("data_error:" err.Message)
+    }
 }
 
 BuildJson() {
@@ -273,7 +275,8 @@ BuildJson() {
     s .= '"patientId":"' EscapeJson(STATE["patientId"]) '",'
     s .= '"dirty":' (GlobalUnsavedChanges ? "true" : "false") ','
     s .= '"canUndo":' (UndoHistory.Length > 0 ? "true" : "false") ','
-    s .= '"settings":{'    s .= '"chatKey":"' EscapeJson(CFG["chatKey"]) '",'
+    s .= '"settings":{'
+    s .= '"chatKey":"' EscapeJson(CFG["chatKey"]) '",'
     s .= '"onlyGTA":' (CFG["onlyGTA"] ? "true" : "false") ','
     s .= '"baseDelay":' CFG["baseDelay"] ','
     s .= '"afterChatDelay":' CFG["afterChatDelay"] ','
@@ -298,7 +301,8 @@ BuildJson() {
         s .= '{"name":"' EscapeJson(rule["name"]) '","phrase":"' EscapeJson(rule["phrase"]) '","path":"' EscapeJson(rule["path"]) '"}'
     }
     s .= ']},'
-    s .= '"stats":{'    statFirst := true
+    s .= '"stats":{'
+    statFirst := true
     for key in ["totalSent", "patientsHealed", "pillsGiven", "injectionsGiven", "operationsDone", "medChecks", "vaccinesGiven"] {
         if !statFirst
             s .= ","
