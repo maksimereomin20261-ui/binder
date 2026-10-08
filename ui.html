@@ -1,0 +1,1348 @@
+﻿<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>MedBind 4.0</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+        html, body { margin: 0; padding: 0; border: 0; outline: 0; width: 100%; height: 100%; overflow: hidden; background: #0b0b0e; }
+        :root {
+            --bg-color: #0b0b0e; --panel-bg: #121216; --card-bg: #16161c;
+            --card-hover: #1c1c24; --accent-pink: #ff2a5f;
+            --text-main: #ffffff; --text-muted: #8b8b99;
+            --border-color: #23232c; --input-bg: #1a1a22;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; }
+        body { background: radial-gradient(circle at 10% 10%, #1a0a10 0%, #0b0b0e 40%);
+            color: var(--text-main); display: flex; flex-direction: column; border-top: 1px solid #0b0b0e; }
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: var(--accent-pink); }
+
+        .topbar { display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 25px; height: 65px; flex-shrink: 0; -webkit-app-region: drag; background: #0b0b0e; }
+        .logo-section { display: flex; align-items: center; gap: 15px; }
+        .logo-icon { color: var(--accent-pink); font-size: 28px; filter: drop-shadow(0 0 8px rgba(255, 42, 95, 0.6)); }
+        .logo-text h1 { font-size: 18px; font-weight: 700; }
+        .logo-text span { font-size: 11px; color: var(--accent-pink); font-weight: 600; margin-left: 5px; }
+        .logo-text p { font-size: 10px; color: var(--text-muted); letter-spacing: 1px; text-transform: uppercase; }
+        .top-controls { display: flex; align-items: center; gap: 20px; -webkit-app-region: no-drag; }
+        .status-badge { display: flex; flex-direction: column; align-items: flex-end; }
+        .status-title { font-size: 12px; font-weight: 600; }
+        .status-sub { font-size: 10px; color: var(--text-muted); }
+        .window-controls { display: flex; gap: 15px; color: var(--text-muted); font-size: 14px;
+            cursor: pointer; padding-left: 15px; border-left: 1px solid var(--border-color); }
+        .window-controls i { padding: 4px; transition: color 0.2s; }
+        .window-controls i:hover { color: white; }
+        .window-controls .close:hover { color: var(--accent-pink); }
+
+        .app-container { display: flex; flex: 1; padding: 0 15px 15px 15px;
+            gap: 15px; height: calc(100vh - 65px); overflow: hidden; }
+        .sidebar-left { width: 260px; display: flex; flex-direction: column; gap: 15px; flex-shrink: 0; }
+        .binder-toggle { background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 15px; display: flex; justify-content: space-between; align-items: center; }
+        .toggle-text h3 { font-size: 13px; margin-bottom: 4px; }
+        .toggle-text p { font-size: 10px; color: var(--text-muted); }
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #333; transition: .4s; border-radius: 34px; }
+        .slider:before { position: absolute; content: ""; height: 14px; width: 14px;
+            left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--accent-pink); }
+        input:checked + .slider:before { transform: translateX(20px); }
+        .menu-section { background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+        .menu-header { padding: 15px; font-size: 11px; color: var(--text-muted);
+            text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+        .menu-list { list-style: none; overflow-y: auto; flex: 1; }
+        .menu-item { display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 15px; font-size: 13px; color: var(--text-muted);
+            cursor: pointer; transition: all 0.2s; border-left: 3px solid transparent; }
+        .menu-item:hover { background: var(--card-hover); color: white; }
+        .menu-item.active { background: linear-gradient(90deg, rgba(255,42,95,0.1) 0%, transparent 100%);
+            color: white; border-left-color: var(--accent-pink); }
+        .menu-item.active i { color: var(--accent-pink); }
+        .menu-item i { width: 20px; font-size: 14px; }
+        .menu-item .count { font-size: 11px; color: var(--accent-pink); font-weight: 600; }
+        .user-profile { background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 12px 15px;
+            display: flex; align-items: center; justify-content: space-between; cursor: pointer; }
+        .user-info { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; background: var(--input-bg);
+            border-radius: 8px; display: flex; justify-content: center; align-items: center; color: var(--text-muted); }
+        .user-text h4 { font-size: 12px; font-weight: 500; }
+        .user-text p { font-size: 10px; color: var(--text-muted); }
+        .main-content { flex: 1; background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; min-width: 0; }
+        .main-header { padding: 20px 25px; display: flex; justify-content: space-between;
+            align-items: center; border-bottom: 1px solid var(--border-color); gap: 15px; }
+        .main-title { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .main-title i { color: var(--accent-pink); font-size: 24px; }
+        .main-title h2 { font-size: 16px; font-weight: 600; }
+        .main-title p { font-size: 11px; color: var(--text-muted); }
+        .search-bar { display: flex; align-items: center; background: var(--input-bg);
+            border: 1px solid var(--border-color); border-radius: 8px;
+            padding: 8px 15px; width: 300px; gap: 10px; flex-shrink: 1; min-width: 150px; }
+        .search-bar i { color: var(--text-muted); font-size: 12px; }
+        .search-bar input { background: transparent; border: none; color: white; font-size: 12px; outline: none; width: 100%; }
+        .search-bar span { font-size: 10px; color: var(--text-muted); background: #23232c; padding: 2px 6px; border-radius: 4px; }
+        .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+        .btn { background: var(--input-bg); border: 1px solid var(--border-color); color: white;
+            padding: 8px 15px; border-radius: 8px; font-size: 12px; font-weight: 500;
+            cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; }
+        .btn:hover { background: #23232c; }
+        .btn-primary { background: var(--accent-pink); border-color: var(--accent-pink); color: white; }
+        .btn-primary:hover { background: #e62054; box-shadow: 0 0 15px rgba(255, 42, 95, 0.4); }
+        .binds-list { padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .bind-card { background: var(--card-bg); border: 1px solid var(--border-color);
+            border-radius: 10px; padding: 15px; display: flex; align-items: center;
+            gap: 15px; cursor: pointer; transition: all 0.2s; position: relative; overflow: hidden;
+            flex-shrink: 0; animation: cardIn 0.35s ease backwards; }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+        .bind-card:hover { background: var(--card-hover); border-color: #333; }
+        .bind-card.active { border-color: var(--accent-pink); background: linear-gradient(90deg, rgba(255,42,95,0.05) 0%, transparent 100%); }
+        .bind-card.active::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 3px; background: var(--accent-pink); }
+        .bind-icon { width: 40px; height: 40px; background: var(--input-bg); border-radius: 8px;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--accent-pink); font-size: 18px; flex-shrink: 0; }
+        .bind-info { flex: 1; min-width: 0; }
+        .bind-info h3 { font-size: 14px; margin-bottom: 4px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bind-info p { font-size: 11px; color: var(--text-muted); margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .bind-tags { display: flex; gap: 8px; }
+        .tag { font-size: 10px; background: #23232c; padding: 2px 8px; border-radius: 4px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+        .bind-actions { display: flex; align-items: center; gap: 15px; flex-shrink: 0; }
+        .hotkey-badge { background: var(--input-bg); border: 1px solid var(--border-color); padding: 4px 10px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+        .status-dot { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+        .dot { width: 6px; height: 6px; border-radius: 50%; }
+        .dot.active { background: #00e676; box-shadow: 0 0 8px rgba(0, 230, 118, 0.5); }
+        .dot.disabled { background: var(--text-muted); }
+        .line-count { font-size: 11px; color: var(--text-muted); display: flex; align-items: center; gap: 5px; }
+
+        .skeleton-card { background: linear-gradient(90deg, #16161c 25%, #1f1f28 50%, #16161c 75%);
+            background-size: 200% 100%; animation: shimmer 1.4s ease-in-out infinite;
+            border: 1px solid var(--border-color); border-radius: 10px; height: 88px;
+            flex-shrink: 0; position: relative; overflow: hidden; }
+        .skeleton-card::before { content: ''; position: absolute; left: 15px; top: 50%; transform: translateY(-50%);
+            width: 40px; height: 40px; background: rgba(255,255,255,0.03); border-radius: 8px; }
+        .skeleton-card::after { content: ''; position: absolute; left: 70px; top: 22px;
+            width: 45%; height: 12px; background: rgba(255,255,255,0.04); border-radius: 4px;
+            box-shadow: 0 20px 0 rgba(255,255,255,0.02); }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+
+        .sidebar-right { width: 340px; background: var(--panel-bg); border: 1px solid var(--border-color);
+            border-radius: 12px; display: flex; flex-direction: column;
+            overflow-y: auto; padding: 25px; flex-shrink: 0; }
+        .detail-header { text-align: center; margin-bottom: 25px; }
+        .detail-icon { width: 60px; height: 60px; background: var(--input-bg); border-radius: 15px;
+            display: flex; justify-content: center; align-items: center;
+            color: var(--accent-pink); font-size: 24px; margin: 0 auto 15px auto;
+            border: 1px solid rgba(255,42,95,0.3); box-shadow: 0 0 20px rgba(255,42,95,0.1); }
+        .detail-header h2 { font-size: 18px; margin-bottom: 8px; }
+        .detail-header p { font-size: 12px; color: var(--text-muted); line-height: 1.5; margin-bottom: 15px; word-break: break-word; }
+        .category-badge { display: inline-flex; align-items: center; gap: 6px; background: #23232c; padding: 4px 10px; border-radius: 6px; font-size: 11px; color: var(--text-main); }
+        .detail-props { display: flex; flex-direction: column; gap: 12px; margin-bottom: 25px; padding-bottom: 25px; border-bottom: 1px solid var(--border-color); }
+        .prop-row { display: flex; justify-content: space-between; align-items: center; font-size: 12px; }
+        .prop-label { display: flex; align-items: center; gap: 8px; color: var(--text-muted); }
+        .prop-value { font-weight: 500; }
+        .prop-value.active { color: #00e676; display: flex; align-items: center; gap: 6px; }
+        .commands-list h3 { font-size: 12px; display: flex; align-items: center; gap: 8px; margin-bottom: 15px; color: var(--text-muted); }
+        .command-item { display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: var(--input-bg); border-radius: 8px;
+            margin-bottom: 8px; font-size: 11px; gap: 10px; }
+        .cmd-text { color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; flex: 1; min-width: 0; }
+        .cmd-delay { color: var(--accent-pink); font-weight: 600; flex-shrink: 0; }
+        .action-buttons { margin-top: auto; display: grid; grid-template-columns: 1fr 1fr; gap: 8px; padding-top: 20px; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: white;
+            padding: 11px 8px; border-radius: 8px; font-size: 12px; font-weight: 500;
+            display: flex; justify-content: center; align-items: center; gap: 6px;
+            cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+        .btn-outline:hover { background: var(--input-bg); }
+        .btn-outline.danger { color: var(--accent-pink); border-color: rgba(255,42,95,0.3); }
+        .btn-outline.danger:hover { background: rgba(255,42,95,0.1); }
+        .btn-outline.success { color: #00e676; border-color: rgba(0,230,118,0.3); }
+        .btn-outline.success:hover { background: rgba(0,230,118,0.1); }
+        .btn-outline.warning { color: #ffb300; border-color: rgba(255,179,0,0.3); }
+        .btn-outline.warning:hover { background: rgba(255,179,0,0.1); }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted); font-size: 13px; }
+        .empty-state i { font-size: 48px; color: #23232c; margin-bottom: 15px; display: block; }
+
+        .toast-container { position: fixed; bottom: 20px; right: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; pointer-events: none; }
+        .toast { background: var(--card-bg); border: 1px solid var(--border-color); border-left: 3px solid var(--accent-pink);
+            padding: 12px 18px; border-radius: 8px; font-size: 13px; color: white;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4); animation: slideIn 0.3s ease;
+            min-width: 220px; max-width: 400px; }
+        .toast.success { border-left-color: #00e676; }
+        .toast.warning { border-left-color: #ffb300; }
+        .toast.error { border-left-color: #ff2a5f; }
+        .toast.info { border-left-color: #2196f3; }
+        @keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px);
+            z-index: 9000; display: flex; justify-content: center; align-items: center;
+            animation: fadeIn 0.2s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .modal { background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.6);
+            animation: modalIn 0.25s ease; }
+        @keyframes modalIn { from { transform: scale(0.95); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+        .modal-header { display: flex; justify-content: space-between; align-items: center;
+            padding: 20px 25px; border-bottom: 1px solid var(--border-color); flex-shrink: 0; }
+        .modal-header h2 { font-size: 16px; font-weight: 600; display: flex; align-items: center; gap: 10px; }
+        .modal-header h2 i { color: var(--accent-pink); }
+        .modal-header .close-x { color: var(--text-muted); font-size: 18px; cursor: pointer; padding: 5px; }
+        .modal-header .close-x:hover { color: var(--accent-pink); }
+        .modal-body { flex: 1; overflow-y: auto; padding: 25px; }
+        .modal-footer { display: flex; justify-content: flex-end; gap: 10px;
+            padding: 20px 25px; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+
+        #editModal .modal { width: 900px; max-width: 95vw; height: 88vh; }
+
+        .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 25px; }
+        .edit-row { display: flex; flex-direction: column; gap: 6px; }
+        .edit-row label { font-size: 11px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .edit-row input[type="text"], .edit-row input[type="number"], .edit-row select {
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 10px 12px; color: white; font-size: 13px;
+            font-family: 'Inter', sans-serif; outline: none; transition: all 0.2s;
+        }
+        .edit-row input:focus, .edit-row select:focus { border-color: var(--accent-pink); }
+        .edit-row.full { grid-column: span 2; }
+
+        .hotkey-input-wrap { display: flex; gap: 6px; align-items: stretch; max-width: 340px; }
+        .hotkey-input-wrap input {
+            flex: 1; min-width: 0; font-family: 'Consolas', monospace; font-size: 13px;
+            letter-spacing: 1px; text-align: center;
+        }
+        .hotkey-input-wrap input.capturing {
+            border-color: var(--accent-pink);
+            background: rgba(255,42,95,0.08);
+            color: var(--accent-pink);
+            font-weight: 600;
+            animation: pulseBorder 1.5s ease-in-out infinite;
+        }
+        @keyframes pulseBorder {
+            0%, 100% { box-shadow: 0 0 0 0 rgba(255,42,95,0.4); }
+            50% { box-shadow: 0 0 0 4px rgba(255,42,95,0); }
+        }
+        .hotkey-input-wrap input.conflict {
+            border-color: #ffb300;
+            background: rgba(255,179,0,0.08);
+            color: #ffb300;
+        }
+        .hotkey-input-wrap input.reserved {
+            border-color: #f44336;
+            background: rgba(244,67,54,0.08);
+            color: #f44336;
+        }
+        .hotkey-input-wrap input.empty-ok { color: var(--text-muted); }
+
+        .hk-btn {
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 0 10px;
+            border-radius: 8px; cursor: pointer; font-size: 13px;
+            transition: all 0.2s; display: flex; align-items: center; justify-content: center;
+        }
+        .hk-btn:hover { color: white; border-color: var(--accent-pink); }
+        .hk-btn.undo:hover { color: #ffb300; border-color: #ffb300; }
+        .hk-btn.clear:hover { color: #f44336; border-color: #f44336; }
+
+        .hk-hint {
+            font-size: 11px; margin-top: 6px; padding: 0 2px;
+            display: flex; align-items: center; gap: 6px; min-height: 16px;
+            transition: color 0.2s;
+        }
+        .hk-hint.ok { color: var(--text-muted); }
+        .hk-hint.conflict { color: #ffb300; }
+        .hk-hint.reserved { color: #f44336; }
+        .hk-hint i { font-size: 11px; }
+
+        .checkbox-row { display: flex; align-items: center; gap: 10px; font-size: 13px; padding-top: 22px; }
+        .checkbox-row input[type="checkbox"] { width: 18px; height: 18px; accent-color: var(--accent-pink); }
+
+        .lines-section { background: var(--bg-color); border: 1px solid var(--border-color);
+            border-radius: 12px; padding: 20px; margin-top: 5px; }
+        .lines-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .lines-header h3 { font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+        .lines-header h3 i { color: var(--accent-pink); }
+        .lines-header-actions { display: flex; align-items: center; gap: 8px; }
+
+        .pin-btn {
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            color: var(--text-muted); padding: 6px 10px; border-radius: 6px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .pin-btn:hover { color: white; border-color: var(--accent-pink); }
+        .pin-btn.active { color: var(--accent-pink); border-color: var(--accent-pink); background: rgba(255,42,95,0.1); }
+
+        .vars-bar {
+            display: flex; gap: 8px; flex-wrap: wrap; align-items: center;
+            margin-bottom: 15px;
+            padding: 10px 12px;
+            background: #170d12;
+            border: 1px solid rgba(255,42,95,0.15);
+            border-radius: 8px;
+            font-size: 11px;
+            z-index: 20;
+        }
+        .vars-bar.pinned {
+            position: sticky;
+            top: 0;
+            box-shadow: 0 6px 16px rgba(0,0,0,0.6);
+        }
+        .vars-bar span { color: var(--text-muted); margin-right: 6px; }
+        .tag-btn { background: var(--input-bg); border: 1px solid var(--border-color);
+            color: var(--accent-pink); padding: 4px 10px; border-radius: 5px;
+            font-size: 11px; font-family: 'Consolas', monospace; cursor: pointer; transition: all 0.2s; }
+        .tag-btn:hover { background: rgba(255,42,95,0.15); border-color: var(--accent-pink); }
+        .tag-btn.custom { color: #00e676; }
+        .tag-btn.custom:hover { background: rgba(0,230,118,0.15); border-color: #00e676; }
+
+        .edit-lines { display: flex; flex-direction: column; gap: 8px; }
+        .edit-line { display: flex; align-items: center; gap: 8px;
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 8px 10px; }
+        .edit-line .line-num { width: 26px; height: 26px; display: flex; align-items: center; justify-content: center;
+            background: #23232c; color: var(--accent-pink); font-size: 11px; font-weight: 600;
+            border-radius: 6px; flex-shrink: 0; }
+        .edit-line input.line-text { flex: 1; min-width: 0; background: transparent; border: none;
+            color: white; font-size: 12px; font-family: 'Inter', sans-serif; outline: none; padding: 4px 0; }
+        .edit-line input.line-delay { width: 70px; background: #23232c; border: none; border-radius: 6px;
+            color: var(--accent-pink); font-size: 11px; text-align: center;
+            padding: 5px; outline: none; font-family: 'Consolas', monospace; }
+        .edit-line button { background: transparent; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 5px; font-size: 13px; border-radius: 4px; transition: all 0.2s; }
+        .edit-line button:hover { color: var(--accent-pink); background: rgba(255,42,95,0.1); }
+        .edit-line button.move-btn:hover { color: #2196f3; background: rgba(33,150,243,0.1); }
+
+        .btn-small { background: var(--input-bg); border: 1px solid var(--border-color);
+            color: white; padding: 6px 12px; border-radius: 6px;
+            font-size: 11px; font-weight: 500; cursor: pointer;
+            display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn-small:hover { background: #23232c; }
+        .btn-small.success { color: #00e676; border-color: rgba(0,230,118,0.3); }
+        .btn-small.success:hover { background: rgba(0,230,118,0.1); }
+
+        .preview-box { margin-top: 15px; padding: 12px 15px; background: var(--bg-color);
+            border-left: 3px solid var(--accent-pink); border-radius: 8px;
+            font-size: 12px; color: var(--text-muted); font-style: italic; line-height: 1.5; }
+        .preview-box strong { color: var(--text-main); font-style: normal; }
+
+        #varsModal .modal { width: 700px; max-width: 95vw; height: 75vh; }
+        .vars-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .var-row { display: flex; align-items: center; gap: 10px;
+            background: var(--input-bg); border: 1px solid var(--border-color);
+            border-radius: 8px; padding: 10px 12px; }
+        .var-row .var-tag { background: #23232c; color: #00e676; padding: 4px 10px; border-radius: 6px;
+            font-family: 'Consolas', monospace; font-size: 12px; font-weight: 600;
+            min-width: 110px; text-align: center; }
+        .var-row .var-arrow { color: var(--text-muted); font-size: 14px; }
+        .var-row input { flex: 1; background: transparent; border: none; color: white;
+            font-size: 13px; outline: none; padding: 4px 0; }
+        .var-row .var-del { background: transparent; border: none; color: var(--text-muted);
+            cursor: pointer; padding: 5px; border-radius: 4px; transition: all 0.2s; }
+        .var-row .var-del:hover { color: var(--accent-pink); background: rgba(255,42,95,0.1); }
+        .var-row.reserved { border-color: rgba(255,255,255,0.05); }
+        .var-row.reserved .var-tag { color: var(--accent-pink); }
+        .var-row.reserved input { color: var(--text-muted); cursor: not-allowed; }
+        .reserved-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 15px;
+            padding: 8px 12px; background: rgba(255,42,95,0.03); border-radius: 6px;
+            border-left: 2px solid var(--accent-pink); }
+    </style>
+</head>
+<body>
+
+<header class="topbar">
+    <div class="logo-section">
+        <i class="fa-solid fa-heart-pulse logo-icon"></i>
+        <div class="logo-text">
+            <h1>MedBind <span>4.0</span></h1>
+            <p>Doctor Binder • GTA SAMP RP</p>
+        </div>
+    </div>
+    <div class="top-controls">
+        <div class="status-badge">
+            <span class="status-title">GTA SAMP RP</span>
+            <span class="status-sub" id="statusSub">Ожидание игры...</span>
+        </div>
+        <div class="window-controls">
+            <i class="fa-solid fa-minus" id="btnMin"></i>
+            <i class="fa-regular fa-square" id="btnMax"></i>
+            <i class="fa-solid fa-xmark close" id="btnClose"></i>
+        </div>
+    </div>
+</header>
+
+<div class="app-container">
+    <aside class="sidebar-left">
+        <div class="binder-toggle">
+            <div class="toggle-text">
+                <h3>Биндер активен</h3>
+                <p id="binderStateText">v4.0 • ЗАГРУЗКА</p>
+            </div>
+            <label class="switch">
+                <input type="checkbox" checked id="binderToggle">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="menu-section">
+            <div class="menu-header">КАТЕГОРИИ</div>
+            <ul class="menu-list" id="categoryList">
+                <li class="menu-item active" data-category="">
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <i class="fa-solid fa-house"></i> Все бинды
+                    </div>
+                    <span class="count" id="countAll">...</span>
+                </li>
+            </ul>
+        </div>
+
+        <div class="user-profile">
+            <div class="user-info">
+                <div class="user-avatar"><i class="fa-regular fa-user"></i></div>
+                <div class="user-text">
+                    <h4 id="profileName">Укажите ник</h4>
+                    <p id="profileHospital">Профиль не заполнен</p>
+                </div>
+            </div>
+            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 10px;"></i>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <div class="main-header">
+            <div class="main-title">
+                <i class="fa-solid fa-heart-pulse"></i>
+                <div>
+                    <h2>Все бинды</h2>
+                    <p id="bindsCount">Загрузка...</p>
+                </div>
+            </div>
+            <div class="search-bar">
+                <i class="fa-solid fa-magnifying-glass"></i>
+                <input type="text" id="searchInput" placeholder="Поиск...">
+                <span>Ctrl+K</span>
+            </div>
+            <div class="header-actions">
+                <button class="btn" onclick="openVarsEditor()"><i class="fa-solid fa-code"></i> Переменные</button>
+                <button class="btn btn-primary" onclick="createBind()"><i class="fa-solid fa-plus"></i> Создать бинд</button>
+            </div>
+        </div>
+
+        <div class="binds-list" id="bindsList">
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+            <div class="skeleton-card"></div>
+        </div>
+    </main>
+
+    <aside class="sidebar-right" id="detailsPanel">
+        <div class="empty-state" style="padding-top: 100px;">
+            <i class="fa-regular fa-hand-pointer"></i>
+            Выберите бинд из списка,<br>чтобы посмотреть детали
+        </div>
+    </aside>
+</div>
+
+<div class="modal-overlay" id="editModal" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-pen"></i> <span id="editTitle">Редактирование бинда</span></h2>
+            <i class="fa-solid fa-xmark close-x" id="editClose"></i>
+        </div>
+        <div class="modal-body">
+            <div class="edit-grid">
+                <div class="edit-row full">
+                    <label>Название бинда</label>
+                    <input type="text" id="editName" placeholder="Например: Приветствие">
+                </div>
+                <div class="edit-row full">
+                    <label>Горячая клавиша — кликните и нажмите комбинацию</label>
+                    <div class="hotkey-input-wrap">
+                        <input type="text" id="editHotkey" placeholder="Кликните и нажмите клавиши..." readonly>
+                        <button class="hk-btn undo" onclick="undoHotkey()" title="Откатить к предыдущему значению"><i class="fa-solid fa-rotate-left"></i></button>
+                        <button class="hk-btn clear" onclick="clearHotkey()" title="Очистить"><i class="fa-solid fa-eraser"></i></button>
+                    </div>
+                    <div class="hk-hint ok" id="hkHint"><i class="fa-solid fa-circle-info"></i> Кликните в поле и нажмите комбинацию клавиш</div>
+                </div>
+                <div class="edit-row">
+                    <label>Категория</label>
+                    <select id="editCategory">
+                        <option value="Основные">Основные</option>
+                        <option value="Лечение">Лечение</option>
+                        <option value="Медосмотр">Медосмотр</option>
+                        <option value="Вакцины">Вакцины</option>
+                        <option value="Операции">Операции</option>
+                        <option value="Быстрые">Быстрые</option>
+                        <option value="Утилиты">Утилиты</option>
+                        <option value="RP">RP</option>
+                    </select>
+                </div>
+                <div class="edit-row">
+                    <label>Тип статистики</label>
+                    <select id="editStatType">
+                        <option value="">— Не считать</option>
+                        <option value="pills">💊 Таблетки</option>
+                        <option value="inject">💉 Уколы</option>
+                        <option value="operation">🔪 Операции</option>
+                        <option value="medcheck">📋 Медосмотры</option>
+                        <option value="vaccine">🛡 Вакцины</option>
+                    </select>
+                </div>
+                <div class="edit-row">
+                    <label class="checkbox-row">
+                        <input type="checkbox" id="editEnabled">
+                        <span style="text-transform: none; color: var(--text-main); font-size: 13px;">Бинд активен</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="lines-section">
+                <div class="lines-header">
+                    <h3><i class="fa-solid fa-list"></i> Список строк <span id="editLinesCount" style="color:var(--text-muted); font-weight:400; margin-left:8px;">0</span></h3>
+                    <div class="lines-header-actions">
+                        <button class="pin-btn active" id="pinBtn" onclick="toggleVarsSticky()" title="Открепить панель переменных"><i class="fa-solid fa-thumbtack"></i></button>
+                        <button class="btn-small success" onclick="addEditLine()"><i class="fa-solid fa-plus"></i> Добавить строку</button>
+                    </div>
+                </div>
+
+                <div class="vars-bar pinned" id="varsBar">
+                    <span>Вставить:</span>
+                </div>
+
+                <div class="edit-lines" id="editLinesList"></div>
+
+                <div class="preview-box" id="editPreview">
+                    <strong>Предпросмотр:</strong> — выберите строку
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline warning" onclick="undoAll()" style="width: auto; padding: 10px 20px;" title="Откатить все изменения"><i class="fa-solid fa-rotate-left"></i> Откатить всё</button>
+            <button class="btn-outline danger" onclick="closeEditor()" style="width: auto; padding: 10px 20px;">Отмена</button>
+            <button class="btn-primary" onclick="saveEditor()" style="padding: 10px 25px; font-weight: 600;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="modal-overlay" id="varsModal" style="display:none;">
+    <div class="modal">
+        <div class="modal-header">
+            <h2><i class="fa-solid fa-code"></i> Управление переменными</h2>
+            <i class="fa-solid fa-xmark close-x" onclick="closeVarsEditor()"></i>
+        </div>
+        <div class="modal-body">
+            <div class="reserved-hint">
+                <b>Встроенные переменные</b> (заполняются автоматически): {P}, {MY}, {HOSPITAL}, {SPECIALTY}
+            </div>
+            <div class="vars-list" id="varsList"></div>
+            <button class="btn-small success" onclick="addVarRow()"><i class="fa-solid fa-plus"></i> Добавить переменную</button>
+        </div>
+        <div class="modal-footer">
+            <button class="btn-outline danger" onclick="closeVarsEditor()" style="width: auto; padding: 10px 20px;">Отмена</button>
+            <button class="btn-primary" onclick="saveVars()" style="padding: 10px 25px; font-weight: 600;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+    let ALL_BINDS = [];
+    let CURRENT_BIND = null;
+    let CURRENT_CATEGORY = "";
+    let BINDER_ENABLED = true;
+    let EDIT_LINES = [];
+    let EDIT_BIND_ID = null;
+    let USER_VARS = [];
+    let lastFocusedLineInput = null;
+    let EDIT_SNAPSHOT = null;
+    let varsSticky = true;
+
+    // === ЗАХВАТ ХОТКЕЯ ===
+    let hkCaptureActive = false;
+    let hkCapturedKey = '';
+    let hkPreviousKey = '';
+    let hkOriginalKey = '';
+    let hkCaptureTimer = null;
+    let pressedMods = { ctrl: false, alt: false, shift: false, win: false };
+
+    const RESERVED_KEYS = ['F1', 'F5', 'F8', 'F9', 'F10', 'F11', 'F12', 'Escape', 'p', 'c'];
+    const MODIFIER_KEYS = ['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'ContextMenu'];
+
+    // === ПРИЁМ ИЗ AHK ===
+    if (window.chrome && window.chrome.webview) {
+        window.chrome.webview.addEventListener('message', (event) => {
+            let data = event.data;
+            if (typeof data === 'string') {
+                if (data.startsWith('win:')) return;
+                if (data.startsWith('status:')) { parseStatus(data.substring(7)); return; }
+                if (data.startsWith('notify:')) {
+                    try { const n = JSON.parse(data.substring(7)); showToast(n.text, n.type); } catch(e){}
+                    return;
+                }
+                if (data.startsWith('open_editor:')) {
+                    const id = parseInt(data.substring(12));
+                    setTimeout(() => openEditor(id), 400);
+                    return;
+                }
+                if (data.startsWith('hotkey_capture_mods:')) {
+                    if (hkCaptureActive) {
+                        const m = data.substring(20).split(',').map(x => x === '1');
+                        pressedMods = { ctrl: !!m[0], alt: !!m[1], shift: !!m[2], win: !!m[3] };
+                        updateCapturePreview();
+                    }
+                    return;
+                }
+                if (data.startsWith('hotkey_captured:')) {
+                    const hk = data.substring(16);
+                    if (hkCaptureActive) {
+                        hkCapturedKey = hk;
+                        hkPreviousKey = hk;
+                        hkInput.value = formatHotkey(hk);
+                        updateHkHint();
+                        hkInput.blur();
+                    }
+                    return;
+                }
+                if (data === 'hotkey_capture_cancel') {
+                    if (hkCaptureActive) {
+                        hkCapturedKey = hkPreviousKey;
+                        hkInput.value = formatHotkey(hkPreviousKey);
+                        hkInput.blur();
+                    }
+                    return;
+                }
+                if (data === 'hotkey_capture_clear') {
+                    if (hkCaptureActive) {
+                        hkCapturedKey = '';
+                        hkInput.value = '';
+                        updateHkHint();
+                    }
+                    return;
+                }
+                if (data.startsWith('bind_saved:')) { closeEditor(); return; }
+                try { data = JSON.parse(data); } catch(e) { return; }
+            }
+            if (data && data.binds) {
+                ALL_BINDS = data.binds;
+                if (data.profile) {
+                    document.getElementById('profileName').textContent = data.profile.name || 'Укажите ник';
+                    document.getElementById('profileHospital').textContent =
+                        (data.profile.hospital || '') + ' • ' + (data.profile.specialty || '') + (data.profile.rank ? ' • ' + data.profile.rank : '');
+                }
+                if (data.variables) USER_VARS = data.variables;
+                renderCategories();
+                renderBinds();
+                if (EDIT_BIND_ID !== null) {
+                    const refreshed = ALL_BINDS.find(b => b.id === EDIT_BIND_ID);
+                    if (refreshed) CURRENT_BIND = refreshed;
+                }
+            }
+        });
+    } else {
+        document.getElementById('bindsList').innerHTML =
+            '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>WebView2 не найден</div>';
+    }
+
+    function parseStatus(s) {
+        s.split(';').forEach(part => {
+            const [k, v] = part.split('=');
+            if (k === 'binder') {
+                BINDER_ENABLED = v === '1';
+                const toggle = document.getElementById('binderToggle');
+                if (toggle) toggle.checked = BINDER_ENABLED;
+                document.getElementById('binderStateText').textContent = BINDER_ENABLED ? 'v4.0 • АКТИВЕН' : 'v4.0 • ВЫКЛ';
+            }
+            if (k === 'sending')
+                document.getElementById('statusSub').textContent = v === '1' ? '⏳ ОТПРАВКА...' : 'Готов • Ожидание';
+        });
+    }
+
+    function showToast(text, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const el = document.createElement('div');
+        el.className = 'toast ' + type;
+        el.textContent = text;
+        container.appendChild(el);
+        setTimeout(() => {
+            el.style.transition = 'opacity 0.3s, transform 0.3s';
+            el.style.opacity = '0';
+            el.style.transform = 'translateX(100%)';
+            setTimeout(() => el.remove(), 300);
+        }, 2500);
+    }
+
+    function sendWinCmd(cmd) {
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('win:' + cmd);
+    }
+    document.getElementById('btnClose').onclick = () => sendWinCmd('close');
+    document.getElementById('btnMin').onclick   = () => sendWinCmd('min');
+    document.getElementById('btnMax').onclick   = () => sendWinCmd('max');
+    document.getElementById('binderToggle').onchange = () => {
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('toggle_binder');
+    };
+
+    function renderCategories() {
+        const cats = {};
+        ALL_BINDS.forEach(b => {
+            const c = b.category || 'Без категории';
+            cats[c] = (cats[c] || 0) + 1;
+        });
+        const list = document.getElementById('categoryList');
+        list.innerHTML = '<li class="menu-item active" data-category=""><div style="display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-house"></i> Все бинды</div><span class="count">' + ALL_BINDS.length + '</span></li>';
+        const icons = {
+            'Основные': 'fa-comment', 'Лечение': 'fa-heart-pulse',
+            'Медосмотр': 'fa-clipboard-list', 'Вакцины': 'fa-syringe',
+            'Операции': 'fa-scalpel', 'Быстрые': 'fa-bolt',
+            'Утилиты': 'fa-wrench', 'RP': 'fa-user'
+        };
+        Object.keys(cats).sort().forEach(cat => {
+            const icon = icons[cat] || 'fa-folder';
+            const li = document.createElement('li');
+            li.className = 'menu-item';
+            li.dataset.category = cat;
+            li.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><i class="fa-solid ${icon}"></i> ${cat}</div><span class="count" style="color: var(--text-muted);">${cats[cat]}</span>`;
+            li.onclick = () => selectCategory(cat);
+            list.appendChild(li);
+        });
+        list.querySelector('[data-category=""]').onclick = () => selectCategory("");
+    }
+
+    function selectCategory(cat) {
+        CURRENT_CATEGORY = cat;
+        document.querySelectorAll('.menu-item').forEach(el => {
+            el.classList.toggle('active', el.dataset.category === cat);
+        });
+        renderBinds();
+    }
+
+    function renderBinds() {
+        const list = document.getElementById('bindsList');
+        const search = (document.getElementById('searchInput').value || '').toLowerCase();
+        let filtered = ALL_BINDS;
+        if (CURRENT_CATEGORY)
+            filtered = filtered.filter(b => (b.category || 'Без категории') === CURRENT_CATEGORY);
+        if (search)
+            filtered = filtered.filter(b =>
+                (b.name || '').toLowerCase().includes(search) ||
+                (b.hotkey || '').toLowerCase().includes(search) ||
+                (b.category || '').toLowerCase().includes(search));
+        document.getElementById('bindsCount').textContent = filtered.length + ' биндов';
+        if (filtered.length === 0) {
+            list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i>Ничего не найдено</div>';
+            return;
+        }
+        list.innerHTML = '';
+        filtered.forEach((bind, i) => {
+            const card = document.createElement('div');
+            card.className = 'bind-card';
+            card.style.animationDelay = (i * 0.03) + 's';
+            card.dataset.id = bind.id;
+            const statusClass = bind.enabled ? 'active' : 'disabled';
+            const statusText = bind.enabled ? 'Активен' : 'Выключен';
+            const icon = getBindIcon(bind.category);
+            card.innerHTML = `
+                <div class="bind-icon"><i class="fa-solid ${icon}"></i></div>
+                <div class="bind-info">
+                    <h3>${escapeHtml(bind.name)}</h3>
+                    <p>${escapeHtml(bind.preview || '...')}</p>
+                    <div class="bind-tags">
+                        ${bind.category ? `<span class="tag"><i class="fa-solid fa-folder"></i> ${escapeHtml(bind.category)}</span>` : ''}
+                    </div>
+                </div>
+                <div class="bind-actions">
+                    <div class="hotkey-badge">${escapeHtml(formatHotkey(bind.hotkey))}</div>
+                    <div class="status-dot"><div class="dot ${statusClass}"></div> ${statusText}</div>
+                    <div class="line-count"><i class="fa-solid fa-list"></i> ${bind.lineCount || 0}</div>
+                </div>
+            `;
+            card.onclick = () => selectBind(bind);
+            card.ondblclick = () => {
+                if (window.chrome && window.chrome.webview)
+                    window.chrome.webview.postMessage('run_bind:' + bind.id);
+            };
+            list.appendChild(card);
+        });
+    }
+
+    function getBindIcon(cat) {
+        const icons = {
+            'Основные': 'fa-comment', 'Лечение': 'fa-heart-pulse',
+            'Медосмотр': 'fa-clipboard-list', 'Вакцины': 'fa-syringe',
+            'Операции': 'fa-scalpel', 'Быстрые': 'fa-bolt',
+            'Утилиты': 'fa-wrench', 'RP': 'fa-user'
+        };
+        return icons[cat] || 'fa-comment';
+    }
+
+    function selectBind(bind) {
+        CURRENT_BIND = bind;
+        document.querySelectorAll('.bind-card').forEach(c => {
+            c.classList.toggle('active', String(c.dataset.id) === String(bind.id));
+        });
+        const panel = document.getElementById('detailsPanel');
+        const lines = (bind.lines || []).map((l, i) => `
+            <div class="command-item">
+                <span class="cmd-text">${i+1} &nbsp; ${escapeHtml(l.text)}</span>
+                <span class="cmd-delay">${((l.delay||0)/1000).toFixed(1)}c</span>
+            </div>
+        `).join('');
+        panel.innerHTML = `
+            <div class="detail-header">
+                <div class="detail-icon"><i class="fa-solid ${getBindIcon(bind.category)}"></i></div>
+                <h2>${escapeHtml(bind.name)}</h2>
+                <p>${escapeHtml((bind.lines && bind.lines[0]) ? bind.lines[0].text : '...')}</p>
+                ${bind.category ? `<div class="category-badge"><i class="fa-solid fa-folder"></i> ${escapeHtml(bind.category)}</div>` : ''}
+            </div>
+            <div class="detail-props">
+                <div class="prop-row">
+                    <div class="prop-label"><i class="fa-regular fa-keyboard"></i> Горячая клавиша</div>
+                    <div class="prop-value">${escapeHtml(formatHotkey(bind.hotkey))}</div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-label"><i class="fa-solid fa-circle-check"></i> Статус</div>
+                    <div class="prop-value ${bind.enabled ? 'active' : ''}">
+                        <div class="dot ${bind.enabled ? 'active' : 'disabled'}"></div> ${bind.enabled ? 'Активен' : 'Выключен'}
+                    </div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-label"><i class="fa-solid fa-list"></i> Строки</div>
+                    <div class="prop-value">${bind.lineCount || 0}</div>
+                </div>
+                <div class="prop-row">
+                    <div class="prop-label"><i class="fa-solid fa-chart-simple"></i> Тип статистики</div>
+                    <div class="prop-value">${escapeHtml(bind.statType || '—')}</div>
+                </div>
+            </div>
+            <div class="commands-list">
+                <h3><i class="fa-regular fa-file-lines"></i> Список команд</h3>
+                ${lines || '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 10px;">Нет строк</div>'}
+            </div>
+            <div class="action-buttons">
+                <button class="btn-outline success" onclick="runCurrentBind()"><i class="fa-solid fa-play"></i> Запуск</button>
+                <button class="btn-outline" onclick="editCurrentBind()"><i class="fa-solid fa-pen"></i> Изменить</button>
+                <button class="btn-outline danger" onclick="deleteCurrentBind()"><i class="fa-regular fa-trash-can"></i> Удалить</button>
+                <button class="btn-outline" onclick="copyCurrentBind()"><i class="fa-regular fa-copy"></i> Копия</button>
+            </div>
+        `;
+    }
+
+    function runCurrentBind() {
+        if (!CURRENT_BIND) return;
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('run_bind:' + CURRENT_BIND.id);
+    }
+    function editCurrentBind() { if (CURRENT_BIND) openEditor(CURRENT_BIND.id); }
+    function deleteCurrentBind() {
+        if (!CURRENT_BIND) return;
+        if (!confirm('Удалить бинд "' + CURRENT_BIND.name + '"?')) return;
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('delete_bind:' + CURRENT_BIND.id);
+    }
+    function copyCurrentBind() {
+        if (!CURRENT_BIND) return;
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('copy_bind:' + CURRENT_BIND.id);
+    }
+    function createBind() {
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('create_bind');
+    }
+
+    function openEditor(bindId) {
+        const bind = ALL_BINDS.find(b => b.id === bindId);
+        if (!bind) return;
+        EDIT_BIND_ID = bindId;
+
+        document.getElementById('editTitle').textContent = 'Редактирование: ' + bind.name;
+        document.getElementById('editName').value = bind.name || '';
+        document.getElementById('editHotkey').value = formatHotkey(bind.hotkey);
+        hkOriginalKey = bind.hotkey || '';
+        hkPreviousKey = bind.hotkey || '';
+        hkCapturedKey = bind.hotkey || '';
+        document.getElementById('editCategory').value = bind.category || 'Основные';
+        document.getElementById('editStatType').value = bind.statType || '';
+        document.getElementById('editEnabled').checked = !!bind.enabled;
+        EDIT_LINES = (bind.lines || []).map(l => ({ text: l.text, delay: l.delay }));
+        if (EDIT_LINES.length === 0) EDIT_LINES.push({ text: '', delay: 2300 });
+
+        EDIT_SNAPSHOT = {
+            name: bind.name || '',
+            hotkey: bind.hotkey || '',
+            category: bind.category || 'Основные',
+            statType: bind.statType || '',
+            enabled: !!bind.enabled,
+            lines: EDIT_LINES.map(l => ({ text: l.text, delay: l.delay }))
+        };
+
+        // Сброс состояния захвата
+        pressedMods = { ctrl: false, alt: false, shift: false, win: false };
+        hkCaptureActive = false;
+
+        updateHkHint();
+        renderVarsBar();
+        renderEditLines();
+        document.getElementById('editModal').style.display = 'flex';
+        setTimeout(() => document.getElementById('editName').focus(), 100);
+    }
+
+    function closeEditor() {
+        stopHkCapture();
+        document.getElementById('editModal').style.display = 'none';
+        EDIT_BIND_ID = null;
+        EDIT_LINES = [];
+        EDIT_SNAPSHOT = null;
+        lastFocusedLineInput = null;
+    }
+
+    function undoAll() {
+        if (!EDIT_SNAPSHOT) return;
+        if (!confirm('Откатить все изменения к состоянию при открытии?')) return;
+        document.getElementById('editName').value = EDIT_SNAPSHOT.name;
+        document.getElementById('editHotkey').value = formatHotkey(EDIT_SNAPSHOT.hotkey);
+        document.getElementById('editCategory').value = EDIT_SNAPSHOT.category;
+        document.getElementById('editStatType').value = EDIT_SNAPSHOT.statType;
+        document.getElementById('editEnabled').checked = EDIT_SNAPSHOT.enabled;
+        EDIT_LINES = EDIT_SNAPSHOT.lines.map(l => ({ text: l.text, delay: l.delay }));
+        hkCapturedKey = EDIT_SNAPSHOT.hotkey;
+        hkPreviousKey = EDIT_SNAPSHOT.hotkey;
+        lastFocusedLineInput = null;
+        renderEditLines();
+        updateHkHint();
+        showToast('Откат выполнен', 'success');
+    }
+
+    function toggleVarsSticky() {
+        varsSticky = !varsSticky;
+        const bar = document.getElementById('varsBar');
+        const btn = document.getElementById('pinBtn');
+        if (varsSticky) {
+            bar.classList.add('pinned');
+            btn.classList.add('active');
+            btn.title = 'Открепить панель переменных';
+        } else {
+            bar.classList.remove('pinned');
+            btn.classList.remove('active');
+            btn.title = 'Закрепить панель переменных';
+        }
+    }
+
+    function renderVarsBar() {
+        const bar = document.getElementById('varsBar');
+        let html = '<span>Вставить:</span>';
+        [{ tag: '{P}' }, { tag: '{MY}' }, { tag: '{HOSPITAL}' }, { tag: '{SPECIALTY}' }, { tag: '{RANK}' }].forEach(v => {
+            html += `<button class="tag-btn" onmousedown="event.preventDefault()" onclick="insertVar('${v.tag}')">${v.tag}</button>`;
+        });
+        USER_VARS.forEach(v => {
+            html += `<button class="tag-btn custom" onmousedown="event.preventDefault()" onclick="insertVar('{${v.name}}')">{${v.name}}</button>`;
+        });
+        bar.innerHTML = html;
+    }
+
+    function renderEditLines() {
+        const container = document.getElementById('editLinesList');
+        document.getElementById('editLinesCount').textContent = EDIT_LINES.length;
+        container.innerHTML = '';
+        EDIT_LINES.forEach((line, idx) => {
+            const el = document.createElement('div');
+            el.className = 'edit-line';
+            el.innerHTML = `
+                <div class="line-num">${idx+1}</div>
+                <input type="text" class="line-text" value="${escapeAttr(line.text)}" data-idx="${idx}" placeholder="Текст строки...">
+                <input type="number" class="line-delay" value="${line.delay}" data-idx="${idx}" min="0" step="100" title="мс">
+                <button class="move-btn" title="Вверх" onclick="moveEditLine(${idx}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
+                <button class="move-btn" title="Вниз" onclick="moveEditLine(${idx}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
+                <button title="Удалить" onclick="removeEditLine(${idx})"><i class="fa-solid fa-trash"></i></button>
+            `;
+            container.appendChild(el);
+        });
+        container.querySelectorAll('.line-text').forEach(inp => {
+            inp.addEventListener('input', e => {
+                const i = parseInt(e.target.dataset.idx);
+                EDIT_LINES[i].text = e.target.value;
+            });
+            inp.addEventListener('focus', e => {
+                lastFocusedLineInput = e.target;
+                updatePreview(parseInt(e.target.dataset.idx));
+            });
+        });
+        container.querySelectorAll('.line-delay').forEach(inp => {
+            inp.addEventListener('input', e => {
+                const i = parseInt(e.target.dataset.idx);
+                EDIT_LINES[i].delay = parseInt(e.target.value) || 0;
+            });
+        });
+    }
+
+    function addEditLine() {
+        EDIT_LINES.push({ text: '', delay: 2300 });
+        renderEditLines();
+        setTimeout(() => {
+            const list = document.getElementById('editLinesList');
+            list.scrollTop = list.scrollHeight;
+            const inputs = list.querySelectorAll('.line-text');
+            if (inputs.length) inputs[inputs.length-1].focus();
+        }, 50);
+    }
+    function removeEditLine(idx) {
+        if (EDIT_LINES.length <= 1) { showToast('Нельзя удалить последнюю', 'warning'); return; }
+        EDIT_LINES.splice(idx, 1);
+        renderEditLines();
+    }
+    function moveEditLine(idx, dir) {
+        const n = idx + dir;
+        if (n < 0 || n >= EDIT_LINES.length) return;
+        [EDIT_LINES[idx], EDIT_LINES[n]] = [EDIT_LINES[n], EDIT_LINES[idx]];
+        renderEditLines();
+    }
+
+    function insertVar(v) {
+        let target = document.activeElement;
+        if (!target || !target.classList.contains('line-text')) {
+            target = lastFocusedLineInput;
+        }
+
+        if (target && target.classList.contains('line-text')) {
+            const pos = (target.selectionStart !== null && target.selectionStart !== undefined)
+                ? target.selectionStart
+                : target.value.length;
+            const val = target.value;
+            target.value = val.slice(0, pos) + v + val.slice(pos);
+            const idx = parseInt(target.dataset.idx);
+            EDIT_LINES[idx].text = target.value;
+            target.focus();
+            const newPos = pos + v.length;
+            target.setSelectionRange(newPos, newPos);
+            updatePreview(idx);
+        } else {
+            showToast('Кликните в строку, чтобы вставить переменную', 'warning');
+        }
+    }
+
+    function updatePreview(idx) {
+        if (idx === undefined) {
+            document.getElementById('editPreview').innerHTML = '<strong>Предпросмотр:</strong> — выберите строку';
+            return;
+        }
+        if (idx < 0 || idx >= EDIT_LINES.length) return;
+        let text = EDIT_LINES[idx].text;
+        text = text.replace(/\{P\}/g, '[ID]');
+        text = text.replace(/\{MY\}/g, document.getElementById('profileName').textContent || '[Моё имя]');
+        text = text.replace(/\{HOSPITAL\}/g, 'MCLV');
+        text = text.replace(/\{SPECIALTY\}/g, 'Интерн');
+        text = text.replace(/\{RANK\}/g, '[Ранг]');
+        USER_VARS.forEach(v => {
+            const re = new RegExp('\\{' + v.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\}', 'g');
+            text = text.replace(re, v.value || '[' + v.name + ']');
+        });
+        document.getElementById('editPreview').innerHTML = '<strong>Предпросмотр:</strong> ' + escapeHtml(text);
+    }
+
+    // ============================================
+    //  ЗАХВАТ ХОТКЕЯ — с отслеживанием модификаторов
+    // ============================================
+    const hkInput = document.getElementById('editHotkey');
+
+    hkInput.addEventListener('focus', startHkCapture);
+    hkInput.addEventListener('blur', endHkCapture);
+
+    function startHkCapture() {
+        hkCaptureActive = true;
+        hkInput.classList.add('capturing');
+        hkInput.classList.remove('conflict', 'reserved', 'empty-ok');
+        hkInput.placeholder = 'Нажмите комбинацию...';
+        hkInput.value = '';
+        hkCapturedKey = '';
+        pressedMods = { ctrl: false, alt: false, shift: false, win: false };
+
+        // Захват выполняется через AHK InputHook, поэтому WebView2 и браузер
+        // не могут перехватить Ctrl+1 / Alt+1 / Shift+1.
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('start_hk_capture');
+    }
+
+    function stopHkCapture() {
+        if (!hkCaptureActive) return;
+        hkCaptureActive = false;
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('stop_hk_capture');
+        if (hkCaptureTimer) { clearTimeout(hkCaptureTimer); hkCaptureTimer = null; }
+    }
+
+    function endHkCapture() {
+        if (!hkCaptureActive) return;
+        hkCaptureActive = false;
+        hkInput.classList.remove('capturing');
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage('stop_hk_capture');
+        if (hkCaptureTimer) { clearTimeout(hkCaptureTimer); hkCaptureTimer = null; }
+
+        if (!hkCapturedKey)
+            hkInput.value = formatHotkey(hkPreviousKey);
+        hkInput.placeholder = 'Кликните и нажмите клавиши...';
+        updateHkHint();
+    }
+
+    // Клавиатура для поля горячей клавиши захватывается AHK InputHook.
+    // DOM keydown/keyup здесь намеренно не используются: WebView2 может
+    // перехватывать системные accelerator-комбинации до DOM.
+
+    function updateCapturePreview() {
+        let mods = '';
+        if (pressedMods.ctrl)  mods += '^';
+        if (pressedMods.alt)   mods += '!';
+        if (pressedMods.shift) mods += '+';
+        if (pressedMods.win)   mods += '#';
+        if (mods) {
+            hkInput.value = formatModsDisplay(mods) + ' ...';
+        } else {
+            hkInput.value = '';
+        }
+    }
+
+    function formatModsDisplay(mods) {
+        let s = '';
+        if (mods.includes('^')) s += 'Ctrl + ';
+        if (mods.includes('!')) s += 'Alt + ';
+        if (mods.includes('+')) s += 'Shift + ';
+        if (mods.includes('#')) s += 'Win + ';
+        return s.replace(/ \+ $/, '');
+    }
+
+    function buildDisplay(mods, key) {
+        let s = '';
+        if (mods.includes('^')) s += 'Ctrl + ';
+        if (mods.includes('!')) s += 'Alt + ';
+        if (mods.includes('+')) s += 'Shift + ';
+        if (mods.includes('#')) s += 'Win + ';
+        return s + key;
+    }
+
+    function codeToAhk(code) {
+        if (!code) return '';
+        if (code.startsWith('Key')) return code.substring(3).toLowerCase();
+        if (code.startsWith('Digit')) return code.substring(5);
+        if (code.startsWith('Numpad')) {
+            const n = code.substring(6);
+            const map = {
+                'Add': 'NumpadAdd', 'Subtract': 'NumpadSub',
+                'Multiply': 'NumpadMult', 'Divide': 'NumpadDiv',
+                'Decimal': 'NumpadDot', 'Enter': 'NumpadEnter'
+            };
+            return map[n] || ('Numpad' + n);
+        }
+        if (/^F\d+$/.test(code)) return code;
+        const map = {
+            'ArrowUp': 'Up', 'ArrowDown': 'Down', 'ArrowLeft': 'Left', 'ArrowRight': 'Right',
+            'Enter': 'Enter', 'Tab': 'Tab', 'Backspace': 'Backspace',
+            'Delete': 'Delete', 'Insert': 'Insert', 'Home': 'Home', 'End': 'End',
+            'PageUp': 'PgUp', 'PageDown': 'PgDn', 'Space': 'Space',
+            'Minus': 'NumpadSub', 'Equal': '=', 'BracketLeft': '[', 'BracketRight': ']',
+            'Backslash': '\\', 'Semicolon': ';', 'Quote': "'",
+            'Comma': 'NumpadDot', 'Period': 'NumpadDot', 'Slash': 'NumpadDiv', 'Backquote': '`'
+        };
+        return map[code] || '';
+    }
+
+    function updateHkHint() {
+        const hint = document.getElementById('hkHint');
+        const val = hkCapturedKey;
+
+        if (!val) {
+            hkInput.classList.remove('conflict', 'reserved');
+            hkInput.classList.add('empty-ok');
+            hint.className = 'hk-hint ok';
+            hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> Кликните в поле и нажмите комбинацию клавиш';
+            return;
+        }
+
+        hkInput.classList.remove('empty-ok');
+
+        const baseKey = val.replace(/[\^!+#]/g, '');
+        if (RESERVED_KEYS.includes(baseKey)) {
+            hkInput.classList.add('reserved');
+            hkInput.classList.remove('conflict');
+            hint.className = 'hk-hint reserved';
+            hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Клавиша ' + baseKey + ' используется игрой — может конфликтовать';
+            return;
+        }
+
+        const conflict = ALL_BINDS.find(b => b.id !== EDIT_BIND_ID && b.hotkey === val);
+        if (conflict) {
+            hkInput.classList.add('conflict');
+            hkInput.classList.remove('reserved');
+            hint.className = 'hk-hint conflict';
+            hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Занято биндом: <b>' + escapeHtml(conflict.name) + '</b> — при сохранении клавиша будет снята с него';
+            return;
+        }
+
+        hkInput.classList.remove('conflict', 'reserved');
+        hint.className = 'hk-hint ok';
+        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> Клавиша свободна';
+    }
+
+    function undoHotkey() {
+        if (!hkPreviousKey) { showToast('Нет предыдущего значения', 'warning'); return; }
+        hkCapturedKey = hkPreviousKey;
+        hkInput.value = formatHotkey(hkPreviousKey);
+        updateHkHint();
+        showToast('Возвращено: ' + formatHotkey(hkPreviousKey), 'info');
+    }
+
+    function clearHotkey() {
+        hkCapturedKey = '';
+        hkInput.value = '';
+        updateHkHint();
+    }
+
+    document.getElementById('editClose').onclick = closeEditor;
+
+    function saveEditor() {
+        if (!EDIT_BIND_ID) return;
+        const name = document.getElementById('editName').value.trim();
+        if (!name) { showToast('Введите название бинда', 'warning'); return; }
+        if (EDIT_LINES.length === 0) { showToast('Добавьте хотя бы одну строку', 'warning'); return; }
+
+        const conflict = ALL_BINDS.find(b => b.id !== EDIT_BIND_ID && b.hotkey === hkCapturedKey && hkCapturedKey);
+        if (conflict) {
+            if (!confirm('Клавиша занята биндом "' + conflict.name + '".\n\nПри сохранении клавиша будет снята с него. Продолжить?'))
+                return;
+        }
+
+        const US = '\x1F';
+        const parts = [
+            'save_bind',
+            String(EDIT_BIND_ID),
+            name,
+            hkCapturedKey,
+            document.getElementById('editCategory').value,
+            document.getElementById('editEnabled').checked ? '1' : '0',
+            document.getElementById('editStatType').value,
+            String(EDIT_LINES.length)
+        ];
+        EDIT_LINES.forEach(l => { parts.push(l.text); parts.push(String(l.delay)); });
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage(parts.join(US));
+    }
+
+    function openVarsEditor() {
+        renderVarsList();
+        document.getElementById('varsModal').style.display = 'flex';
+    }
+    function closeVarsEditor() {
+        document.getElementById('varsModal').style.display = 'none';
+    }
+
+    function renderVarsList() {
+        const list = document.getElementById('varsList');
+        list.innerHTML = '';
+        const builtin = [
+            { name: 'P', value: 'ID пациента (авто)' },
+            { name: 'MY', value: 'Моё имя (авто)' },
+            { name: 'HOSPITAL', value: 'Больница (авто)' },
+            { name: 'SPECIALTY', value: 'Специальность (авто)' },
+            { name: 'RANK', value: 'Ранг (авто)' }
+        ];
+        builtin.forEach(v => {
+            const row = document.createElement('div');
+            row.className = 'var-row reserved';
+            row.innerHTML = `
+                <span class="var-tag">{${v.name}}</span>
+                <i class="fa-solid fa-arrow-right var-arrow"></i>
+                <input type="text" value="${v.value}" readonly>
+                <span style="width: 24px;"></span>
+            `;
+            list.appendChild(row);
+        });
+        USER_VARS.forEach((v, i) => {
+            const row = document.createElement('div');
+            row.className = 'var-row';
+            row.innerHTML = `
+                <input type="text" class="var-name" value="${escapeAttr(v.name)}" placeholder="ИМЯ" style="max-width: 120px; font-family: 'Consolas', monospace; color: #00e676; text-align: center; font-weight: 600;" data-idx="${i}">
+                <i class="fa-solid fa-arrow-right var-arrow"></i>
+                <input type="text" class="var-value" value="${escapeAttr(v.value)}" placeholder="Значение" data-idx="${i}">
+                <button class="var-del" onclick="removeVarRow(${i})"><i class="fa-solid fa-trash"></i></button>
+            `;
+            list.appendChild(row);
+        });
+        list.querySelectorAll('.var-name').forEach(inp => {
+            inp.addEventListener('input', e => {
+                const i = parseInt(e.target.dataset.idx);
+                USER_VARS[i].name = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
+                e.target.value = USER_VARS[i].name;
+            });
+        });
+        list.querySelectorAll('.var-value').forEach(inp => {
+            inp.addEventListener('input', e => {
+                const i = parseInt(e.target.dataset.idx);
+                USER_VARS[i].value = e.target.value;
+            });
+        });
+    }
+
+    function addVarRow() {
+        USER_VARS.push({ name: '', value: '' });
+        renderVarsList();
+        setTimeout(() => {
+            const names = document.querySelectorAll('.var-name');
+            if (names.length) names[names.length-1].focus();
+        }, 50);
+    }
+
+    function removeVarRow(i) {
+        USER_VARS.splice(i, 1);
+        renderVarsList();
+    }
+
+    function saveVars() {
+        const reserved = ['P', 'MY', 'HOSPITAL', 'SPECIALTY', 'RANK'];
+        const seen = new Set();
+        for (let v of USER_VARS) {
+            if (!v.name) { showToast('У переменной пустое имя', 'warning'); return; }
+            if (reserved.includes(v.name.toUpperCase())) {
+                showToast('Имя "' + v.name + '" зарезервировано', 'warning'); return;
+            }
+            if (seen.has(v.name)) { showToast('Дубликат: ' + v.name, 'warning'); return; }
+            seen.add(v.name);
+        }
+        const US = '\x1F';
+        const parts = ['save_vars', String(USER_VARS.length)];
+        USER_VARS.forEach(v => { parts.push(v.name); parts.push(v.value); });
+        if (window.chrome && window.chrome.webview)
+            window.chrome.webview.postMessage(parts.join(US));
+        closeVarsEditor();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (e.key === 'Escape') {
+            if (hkCaptureActive) return;
+            if (document.getElementById('editModal').style.display === 'flex') closeEditor();
+            if (document.getElementById('varsModal').style.display === 'flex') closeVarsEditor();
+        }
+    });
+
+    function escapeHtml(str) {
+        return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+    function escapeAttr(str) { return escapeHtml(str); }
+    function formatHotkey(hk) {
+        if (!hk) return '—';
+        return hk
+            .replace(/\^/g, 'Ctrl+').replace(/!/g, 'Alt+').replace(/\+/g, 'Shift+').replace(/#/g, 'Win+')
+            .replace(/Numpad(\d)/, 'Num$1').replace(/NumpadAdd/, 'Num+')
+            .replace(/NumpadSub/, 'Num-').replace(/NumpadMult/, 'Num*').replace(/NumpadDiv/, 'Num/');
+    }
+
+    document.getElementById('searchInput').addEventListener('input', renderBinds);
+</script>
+</body>
+</html>
