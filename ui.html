@@ -1,4 +1,4 @@
-﻿<!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -14,6 +14,7 @@
             --border-color: #23232c; --input-bg: #1a1a22;
         }
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; user-select: none; }
+        input, textarea, select { user-select: text; -webkit-user-select: text; }
         body { background: radial-gradient(circle at 10% 10%, #1a0a10 0%, #0b0b0e 40%);
             color: var(--text-main); display: flex; flex-direction: column; border-top: 1px solid #0b0b0e; }
         ::-webkit-scrollbar { width: 6px; height: 6px; }
@@ -32,6 +33,7 @@
         .status-badge { display: flex; flex-direction: column; align-items: flex-end; }
         .status-title { font-size: 12px; font-weight: 600; }
         .status-sub { font-size: 10px; color: var(--text-muted); }
+        .status-clock { margin-top: 2px; color: #5d5d6c; font: 9px/1.1 Consolas, monospace; letter-spacing: .6px; }
         .window-controls { display: flex; gap: 15px; color: var(--text-muted); font-size: 14px;
             cursor: pointer; padding-left: 15px; border-left: 1px solid var(--border-color); }
         .window-controls i { padding: 4px; transition: color 0.2s; }
@@ -351,998 +353,565 @@
         .reserved-hint { font-size: 11px; color: var(--text-muted); margin-bottom: 15px;
             padding: 8px 12px; background: rgba(255,42,95,0.03); border-radius: 6px;
             border-left: 2px solid var(--accent-pink); }
+        .top-controls { gap: 9px; }
+        .top-action { border:1px solid var(--border-color); background:var(--card-bg); color:var(--text-muted); border-radius:8px; padding:8px 10px; display:flex; align-items:center; gap:7px; cursor:pointer; font-size:11px; transition:.2s; }
+        .top-action:hover { color:#fff; border-color:var(--accent-pink); background:var(--card-hover); }
+        .top-action.stop-action { color:#ffb300; border-color:rgba(255,179,0,.2); }
+        .top-action.stop-action:hover { color:#fff; border-color:#ffb300; background:rgba(255,179,0,.08); }
+        .top-action.save-action { color:#fff; border-color:rgba(0,230,118,.28); }
+        .top-action.save-action.dirty { color:#fff; border-color:#ffb300; box-shadow:0 0 12px rgba(255,179,0,.12); }
+        .top-action:disabled { opacity:.4; cursor:not-allowed; }
+        .window-controls { gap:8px; padding-left:10px; }
+        .patient-chip { width:100%; min-height:58px; border:1px solid var(--border-color); border-radius:12px; background:var(--card-bg); color:var(--text-main); display:flex; align-items:center; gap:10px; text-align:left; padding:10px 12px; cursor:pointer; transition:.2s; }
+        .patient-chip:hover { border-color:var(--accent-pink); background:var(--card-hover); }
+        .patient-chip-icon { width:32px; height:32px; display:grid; place-items:center; border-radius:8px; background:var(--input-bg); color:var(--accent-pink); }
+        .patient-chip span:nth-child(2) { display:flex; flex-direction:column; gap:3px; min-width:0; flex:1; }
+        .patient-chip b { font-size:12px; }
+        .patient-chip small { color:var(--text-muted); font-size:10px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .patient-chip small.has-id { color:#00e676; font-family:Consolas,monospace; font-size:12px; }
+        .patient-edit,.profile-chevron { font-size:10px; color:var(--text-muted); }
+        .menu-item-label { display:flex; align-items:center; gap:10px; min-width:0; }
+        .menu-item-label span { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+        .menu-footer-action { margin:8px 12px 12px; border:1px solid var(--border-color); border-radius:7px; background:transparent; color:var(--text-muted); padding:8px; font-size:10px; cursor:pointer; }
+        .menu-footer-action:hover { color:#fff; border-color:var(--accent-pink); }
+        .empty-slot-card { border-style:dashed; background:rgba(255,255,255,.015); }
+        .empty-slot-card .bind-icon { color:var(--text-muted); }
+        .empty-slot-cta { color:#00e676; font-size:11px; white-space:nowrap; }
+        .bind-disabled { opacity:.65; }
+        .bind-actions { gap:9px; }
+        .command-index { width:17px; color:var(--text-muted); font-size:10px; flex-shrink:0; }
+        .icon-button { width:32px; height:32px; display:grid; place-items:center; border:1px solid transparent; border-radius:7px; color:var(--text-muted); background:transparent; cursor:pointer; }
+        .icon-button:hover { color:#fff; background:var(--card-hover); border-color:var(--border-color); }
+        #editModal .modal { width:1080px; max-width:96vw; height:91vh; }
+        .modal-narrow { width:620px; max-width:94vw; max-height:88vh; }
+        .modal-narrow .modal-body { max-height:65vh; }
+        .modal-footer-split { justify-content:space-between; align-items:center; }
+        .modal-footer-split > span { display:flex; gap:9px; }
+        .modal-footer button { cursor:pointer; }
+        .edit-grid { grid-template-columns:1fr 1fr; }
+        .edit-row input[type="text"], .edit-row input[type="number"], .edit-row select,
+        .form-stack input, .form-stack select, .settings-content input:not([type="checkbox"]):not([type="range"]),
+        .settings-content select { min-height:36px; background:var(--input-bg); border:1px solid var(--border-color); color:#fff; border-radius:7px; padding:8px 10px; outline:none; }
+        .form-stack { display:flex; flex-direction:column; gap:14px; }
+        .form-stack label { display:flex; flex-direction:column; gap:6px; color:var(--text-muted); font-size:11px; }
+        .form-stack input:focus,.form-stack select:focus,.settings-content input:focus,.settings-content select:focus { border-color:var(--accent-pink); }
+        .hint-text { display:block; color:var(--text-muted); font-size:11px; line-height:1.55; }
+        .line-text { flex:1; min-width:100px; resize:vertical; min-height:44px; background:transparent; border:0; color:#fff; font-size:12px; font-family:Inter,sans-serif; outline:none; padding:5px; }
+        .line-text:focus { background:rgba(255,255,255,.025); border-radius:5px; }
+        .line-delay-wrap { display:flex; align-items:center; gap:4px; color:var(--text-muted); flex-shrink:0; }
+        .line-delay-wrap label { font-size:9px; }
+        .edit-line input.line-delay { width:74px; }
+        .edit-line.has-pending { border-color:#ffb300; }
+        .apply-one-delay { color:#00e676 !important; border:1px solid rgba(0,230,118,.3) !important; }
+        .quick-command-bar,.delay-toolbar,.preset-row,.toolbar-row { display:flex; align-items:center; gap:8px; flex-wrap:wrap; margin:9px 0 12px; }
+        .quick-command-bar { color:var(--text-muted); font-size:10px; }
+        .command-tag { color:#89b4fa; }
+        .delay-toolbar { padding:9px; border:1px solid var(--border-color); border-radius:8px; background:rgba(255,255,255,.018); }
+        .delay-toolbar label,.preset-row span { color:var(--text-muted); font-size:10px; }
+        .delay-toolbar input,.delay-toolbar select { height:30px; max-width:110px; background:var(--input-bg); color:#fff; border:1px solid var(--border-color); border-radius:6px; padding:4px 7px; }
+        .editor-shortcuts { margin-left:auto; color:var(--text-muted); font-size:9px; }
+        .settings-layout { display:flex; flex:1; min-height:0; overflow:hidden; }
+        .modal-settings { width:1040px; max-width:96vw; height:88vh; }
+        .settings-tabs { width:188px; flex-shrink:0; border-right:1px solid var(--border-color); padding:14px 9px; display:flex; flex-direction:column; gap:5px; background:rgba(0,0,0,.12); }
+        .settings-tabs button { display:flex; align-items:center; gap:9px; padding:11px 10px; color:var(--text-muted); background:transparent; border:1px solid transparent; border-radius:7px; text-align:left; font-size:11px; cursor:pointer; }
+        .settings-tabs button:hover,.settings-tabs button.active { color:#fff; background:rgba(255,42,95,.08); border-color:rgba(255,42,95,.2); }
+        .settings-tabs button.active i { color:var(--accent-pink); }
+        .settings-content { flex:1; min-width:0; overflow-y:auto; padding:20px 24px; }
+        .settings-page { display:none; }
+        .settings-page.active { display:block; }
+        .settings-page h3 { color:var(--accent-pink); font-size:13px; margin:0 0 16px; }
+        .settings-page h3.subheading { margin-top:23px; }
+        .settings-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 18px; }
+        .settings-grid > label:not(.setting-check) { display:flex; flex-direction:column; gap:7px; color:var(--text-muted); font-size:10px; }
+        .settings-grid .full { grid-column:1/-1; }
+        .settings-grid input[type=number] { width:100%; }
+        .settings-grid input[type=range] { width:100%; accent-color:var(--accent-pink); }
+        .setting-check { display:flex; align-items:center; gap:9px; color:var(--text-main); font-size:11px; cursor:pointer; }
+        .setting-check input { width:16px; height:16px; accent-color:var(--accent-pink); }
+        .settings-check-list { display:flex; flex-direction:column; gap:16px; padding:12px 0 20px; }
+        .capture-setting { display:flex; gap:5px; align-items:center; }
+        .capture-setting input { width:100%; text-align:center; font:600 12px Consolas,monospace; cursor:pointer; }
+        .capture-setting .hk-btn { height:34px; min-width:34px; }
+        .system-hotkey-row { display:grid; grid-template-columns:190px minmax(180px,1fr); align-items:center; gap:10px 14px; margin-bottom:7px; padding-bottom:8px; border-bottom:1px solid rgba(255,255,255,.035); }
+        .system-hotkey-row > label { color:var(--text-main); font-size:11px; }
+        .system-hotkey-hint { grid-column:2; min-height:13px; color:var(--text-muted); font-size:9px; margin-top:-7px; }
+        .capture-setting input.conflict { border-color:#ffb300; color:#ffb300; }
+        .wheel-settings { display:grid; grid-template-columns:1fr 1fr; gap:10px 16px; margin-top:12px; }
+        .wheel-settings label { display:flex; flex-direction:column; gap:6px; color:var(--text-muted); font-size:10px; }
+        .wheel-settings select { width:100%; }
+        .toolbar-row { margin-top:16px; }
+        .toolbar-row .btn-outline { padding:8px 10px; font-size:10px; }
+        .preset-row { margin-top:15px; }
+        .info-card { display:flex; align-items:flex-start; gap:10px; margin-top:18px; padding:12px; border:1px solid rgba(255,42,95,.16); border-radius:8px; background:rgba(255,42,95,.035); color:var(--text-muted); font-size:10px; line-height:1.5; }
+        .info-card i { color:var(--accent-pink); margin-top:2px; }
+        .rules-heading { display:flex; justify-content:space-between; align-items:center; margin:16px 0 9px; color:var(--text-main); font-size:11px; }
+        .screen-rules-list { display:flex; flex-direction:column; gap:8px; }
+        .screen-rule-row { display:grid; grid-template-columns:120px minmax(150px,1fr) minmax(180px,1.1fr) 34px 34px; gap:6px; align-items:center; }
+        .screen-rule-row input { min-width:0; width:100%; font-size:10px; }
+        .screen-rule-row .hk-btn { min-height:32px; }
+        .data-actions { display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:20px 0; }
+        .data-actions button { justify-content:flex-start; min-height:42px; padding:10px; font-size:10px; }
+        .stats-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; }
+        .modal-stats { width:780px; max-width:94vw; }
+        .modal-help { width:760px; max-width:94vw; min-height:500px; max-height:88vh; }
+        .help-tabs { display:flex; gap:8px; padding:12px 24px 0; border-bottom:1px solid var(--border-color); }
+        .help-tabs button { border:0; border-bottom:2px solid transparent; background:transparent; color:var(--text-muted); padding:9px 12px; cursor:pointer; font-size:11px; }
+        .help-tabs button.active { color:#fff; border-bottom-color:var(--accent-pink); }
+        .help-content { color:#d8d8e0; line-height:1.7; font-size:12px; }
+        .help-content h3 { color:#fff; font-size:14px; margin:4px 0 12px; }
+        .help-content p { color:var(--text-muted); margin:8px 0 14px; }
+        .help-shortcuts { display:grid; grid-template-columns:1fr 1fr; gap:8px 20px; }
+        .help-shortcut { display:flex; justify-content:space-between; gap:16px; padding:7px 10px; border:1px solid var(--border-color); border-radius:7px; background:var(--card-bg); }
+        .help-shortcut b { color:#f3f3f5; font-family:Consolas,monospace; font-size:11px; }
+        .help-list { padding-left:20px; color:var(--text-muted); }
+        .help-list code { color:#00e676; font-family:Consolas,monospace; }
+        @media(max-width:700px){.help-shortcuts{grid-template-columns:1fr}.help-tabs{padding-left:12px;gap:2px}.help-tabs button{padding:8px 6px;font-size:10px}}
+        .stat-card { min-height:108px; display:flex; flex-direction:column; gap:8px; padding:15px; border:1px solid var(--border-color); background:var(--card-bg); border-radius:10px; }
+        .stat-card i { color:var(--accent-pink); }
+        .stat-card span { color:var(--text-muted); font-size:10px; }
+        .stat-card b { font:700 22px Consolas,monospace; }
+        .stats-session { margin-top:16px; color:var(--text-muted); font-size:10px; }
+        .var-reserved-label { color:var(--text-muted); font-size:9px; }
+        .var-row input.var-name { flex:0 0 125px; text-align:center; font:600 12px Consolas,monospace; color:#00e676; }
+        .var-row input.var-value { flex:1; min-width:80px; }
+        .btn:disabled,.btn-outline:disabled,.btn-small:disabled { opacity:.4; cursor:not-allowed; }
+        @media (max-width:1250px) { .sidebar-left{width:220px}.sidebar-right{width:290px}.top-action span{display:none}.top-action{padding:8px 9px}.system-hotkey-row{grid-template-columns:155px minmax(150px,1fr)} }
+        @media (max-width:980px) { .sidebar-right{display:none}.sidebar-left{width:200px}.settings-tabs{width:150px}.screen-rule-row{grid-template-columns:1fr 1.2fr}.screen-rule-row input:nth-child(3){grid-column:1/2}.editor-shortcuts{display:none} }
+
     </style>
 </head>
 <body>
-
 <header class="topbar">
     <div class="logo-section">
         <i class="fa-solid fa-heart-pulse logo-icon"></i>
-        <div class="logo-text">
-            <h1>MedBind <span>4.0</span></h1>
-            <p>Doctor Binder • GTA SAMP RP</p>
-        </div>
+        <div class="logo-text"><h1>MedBind <span>4.1</span></h1><p>Doctor Binder • GTA SAMP RP</p></div>
     </div>
     <div class="top-controls">
-        <div class="status-badge">
-            <span class="status-title">GTA SAMP RP</span>
-            <span class="status-sub" id="statusSub">Ожидание игры...</span>
-        </div>
-        <div class="window-controls">
-            <i class="fa-solid fa-minus" id="btnMin"></i>
-            <i class="fa-regular fa-square" id="btnMax"></i>
-            <i class="fa-solid fa-xmark close" id="btnClose"></i>
-        </div>
+        <div class="status-badge"><span class="status-title" id="statusTitle">MedBind • ГОТОВ</span><span class="status-sub" id="statusSub">Подключение к данным…</span><span class="status-clock" id="appClock">--:--:--</span></div>
+        <button class="top-action stop-action" id="btnStopSending" title="Остановить текущую отправку"><i class="fa-solid fa-hand"></i><span>Стоп</span></button>
+        <button class="top-action" id="btnStats" title="Статистика"><i class="fa-solid fa-chart-simple"></i><span>Статистика</span></button>
+        <button class="top-action" id="btnFilters" title="Управление фильтрами"><i class="fa-solid fa-filter"></i><span>Фильтры</span></button>
+        <button class="top-action" id="btnUndo" title="Отменить последнее действие (Ctrl+Z)" disabled><i class="fa-solid fa-rotate-left"></i></button>
+        <button class="top-action save-action" id="btnSaveAll" title="Сохранить всё (Ctrl+S)"><i class="fa-solid fa-floppy-disk"></i><span>Сохранить</span></button>
+        <div class="window-controls"><i class="fa-solid fa-minus" id="btnMin" title="Свернуть"></i><i class="fa-regular fa-square" id="btnMax" title="Развернуть"></i><i class="fa-solid fa-xmark close" id="btnClose" title="Выход"></i></div>
     </div>
 </header>
 
 <div class="app-container">
     <aside class="sidebar-left">
         <div class="binder-toggle">
-            <div class="toggle-text">
-                <h3>Биндер активен</h3>
-                <p id="binderStateText">v4.0 • ЗАГРУЗКА</p>
-            </div>
-            <label class="switch">
-                <input type="checkbox" checked id="binderToggle">
-                <span class="slider"></span>
-            </label>
+            <div class="toggle-text"><h3>Биндер активен</h3><p id="binderStateText">v4.1 • ЗАГРУЗКА</p></div>
+            <label class="switch"><input type="checkbox" checked id="binderToggle"><span class="slider"></span></label>
         </div>
-
-        <div class="menu-section">
-            <div class="menu-header">КАТЕГОРИИ</div>
-            <ul class="menu-list" id="categoryList">
-                <li class="menu-item active" data-category="">
-                    <div style="display:flex; align-items:center; gap:10px;">
-                        <i class="fa-solid fa-house"></i> Все бинды
-                    </div>
-                    <span class="count" id="countAll">...</span>
-                </li>
-            </ul>
-        </div>
-
-        <div class="user-profile">
-            <div class="user-info">
-                <div class="user-avatar"><i class="fa-regular fa-user"></i></div>
-                <div class="user-text">
-                    <h4 id="profileName">Укажите ник</h4>
-                    <p id="profileHospital">Профиль не заполнен</p>
-                </div>
-            </div>
-            <i class="fa-solid fa-chevron-right" style="color: var(--text-muted); font-size: 10px;"></i>
-        </div>
+        <button class="patient-chip" id="openPatient"><span class="patient-chip-icon"><i class="fa-solid fa-id-card"></i></span><span><b>Пациент</b><small id="patientDisplay">ID не задан</small></span><i class="fa-solid fa-pen patient-edit"></i></button>
+        <div class="menu-section"><div class="menu-header">КАТЕГОРИИ И ФИЛЬТРЫ</div><ul class="menu-list" id="categoryList"><li class="menu-item active">Загрузка…</li></ul><button class="menu-footer-action" id="btnManageFilters"><i class="fa-solid fa-sliders"></i> Настроить фильтры</button><button class="menu-footer-action" id="btnHelp"><i class="fa-regular fa-circle-question"></i> Справка и горячие клавиши</button></div>
+        <button class="user-profile" id="openProfile"><span class="user-info"><span class="user-avatar"><i class="fa-regular fa-user"></i></span><span class="user-text"><h4 id="profileName">Укажите ник</h4><p id="profileHospital">Профиль не заполнен</p></span></span><i class="fa-solid fa-chevron-right profile-chevron"></i></button>
     </aside>
 
     <main class="main-content">
         <div class="main-header">
-            <div class="main-title">
-                <i class="fa-solid fa-heart-pulse"></i>
-                <div>
-                    <h2>Все бинды</h2>
-                    <p id="bindsCount">Загрузка...</p>
-                </div>
-            </div>
-            <div class="search-bar">
-                <i class="fa-solid fa-magnifying-glass"></i>
-                <input type="text" id="searchInput" placeholder="Поиск...">
-                <span>Ctrl+K</span>
-            </div>
-            <div class="header-actions">
-                <button class="btn" onclick="openVarsEditor()"><i class="fa-solid fa-code"></i> Переменные</button>
-                <button class="btn btn-primary" onclick="createBind()"><i class="fa-solid fa-plus"></i> Создать бинд</button>
-            </div>
+            <div class="main-title"><i class="fa-solid fa-heart-pulse"></i><div><h2 id="listTitle">Все бинды</h2><p id="bindsCount">Загрузка…</p></div></div>
+            <label class="search-bar"><i class="fa-solid fa-magnifying-glass"></i><input type="text" id="searchInput" placeholder="Поиск по имени, тексту, клавише…"><span>Ctrl+K</span></label>
+            <div class="header-actions"><button class="btn" id="btnVars"><i class="fa-solid fa-code"></i> Переменные</button><button class="btn btn-primary" id="btnCreate"><i class="fa-solid fa-plus"></i> Создать бинд</button></div>
         </div>
-
-        <div class="binds-list" id="bindsList">
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-            <div class="skeleton-card"></div>
-        </div>
+        <div class="binds-list" id="bindsList"><div class="empty-state"><i class="fa-solid fa-spinner fa-spin"></i>Загрузка биндов…</div></div>
     </main>
 
-    <aside class="sidebar-right" id="detailsPanel">
-        <div class="empty-state" style="padding-top: 100px;">
-            <i class="fa-regular fa-hand-pointer"></i>
-            Выберите бинд из списка,<br>чтобы посмотреть детали
-        </div>
-    </aside>
+    <aside class="sidebar-right" id="detailsPanel"><div class="empty-state" style="padding-top:100px"><i class="fa-regular fa-hand-pointer"></i>Выберите бинд из списка,<br>чтобы посмотреть детали</div></aside>
 </div>
 
-<div class="modal-overlay" id="editModal" style="display:none;">
-    <div class="modal">
-        <div class="modal-header">
-            <h2><i class="fa-solid fa-pen"></i> <span id="editTitle">Редактирование бинда</span></h2>
-            <i class="fa-solid fa-xmark close-x" id="editClose"></i>
-        </div>
-        <div class="modal-body">
-            <div class="edit-grid">
-                <div class="edit-row full">
-                    <label>Название бинда</label>
-                    <input type="text" id="editName" placeholder="Например: Приветствие">
-                </div>
-                <div class="edit-row full">
-                    <label>Горячая клавиша — кликните и нажмите комбинацию</label>
-                    <div class="hotkey-input-wrap">
-                        <input type="text" id="editHotkey" placeholder="Кликните и нажмите клавиши..." readonly>
-                        <button class="hk-btn undo" onclick="undoHotkey()" title="Откатить к предыдущему значению"><i class="fa-solid fa-rotate-left"></i></button>
-                        <button class="hk-btn clear" onclick="clearHotkey()" title="Очистить"><i class="fa-solid fa-eraser"></i></button>
-                    </div>
-                    <div class="hk-hint ok" id="hkHint"><i class="fa-solid fa-circle-info"></i> Кликните в поле и нажмите комбинацию клавиш</div>
-                </div>
-                <div class="edit-row">
-                    <label>Категория</label>
-                    <select id="editCategory">
-                        <option value="Основные">Основные</option>
-                        <option value="Лечение">Лечение</option>
-                        <option value="Медосмотр">Медосмотр</option>
-                        <option value="Вакцины">Вакцины</option>
-                        <option value="Операции">Операции</option>
-                        <option value="Быстрые">Быстрые</option>
-                        <option value="Утилиты">Утилиты</option>
-                        <option value="RP">RP</option>
-                    </select>
-                </div>
-                <div class="edit-row">
-                    <label>Тип статистики</label>
-                    <select id="editStatType">
-                        <option value="">— Не считать</option>
-                        <option value="pills">💊 Таблетки</option>
-                        <option value="inject">💉 Уколы</option>
-                        <option value="operation">🔪 Операции</option>
-                        <option value="medcheck">📋 Медосмотры</option>
-                        <option value="vaccine">🛡 Вакцины</option>
-                    </select>
-                </div>
-                <div class="edit-row">
-                    <label class="checkbox-row">
-                        <input type="checkbox" id="editEnabled">
-                        <span style="text-transform: none; color: var(--text-main); font-size: 13px;">Бинд активен</span>
-                    </label>
-                </div>
-            </div>
-
-            <div class="lines-section">
-                <div class="lines-header">
-                    <h3><i class="fa-solid fa-list"></i> Список строк <span id="editLinesCount" style="color:var(--text-muted); font-weight:400; margin-left:8px;">0</span></h3>
-                    <div class="lines-header-actions">
-                        <button class="pin-btn active" id="pinBtn" onclick="toggleVarsSticky()" title="Открепить панель переменных"><i class="fa-solid fa-thumbtack"></i></button>
-                        <button class="btn-small success" onclick="addEditLine()"><i class="fa-solid fa-plus"></i> Добавить строку</button>
-                    </div>
-                </div>
-
-                <div class="vars-bar pinned" id="varsBar">
-                    <span>Вставить:</span>
-                </div>
-
-                <div class="edit-lines" id="editLinesList"></div>
-
-                <div class="preview-box" id="editPreview">
-                    <strong>Предпросмотр:</strong> — выберите строку
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-outline warning" onclick="undoAll()" style="width: auto; padding: 10px 20px;" title="Откатить все изменения"><i class="fa-solid fa-rotate-left"></i> Откатить всё</button>
-            <button class="btn-outline danger" onclick="closeEditor()" style="width: auto; padding: 10px 20px;">Отмена</button>
-            <button class="btn-primary" onclick="saveEditor()" style="padding: 10px 25px; font-weight: 600;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
-        </div>
-    </div>
+<div class="modal-overlay" id="editModal" style="display:none">
+ <div class="modal">
+  <div class="modal-header"><h2><i class="fa-solid fa-pen"></i> <span id="editTitle">Редактирование бинда</span></h2><button class="icon-button" id="editClose" aria-label="Закрыть"><i class="fa-solid fa-xmark"></i></button></div>
+  <div class="modal-body">
+   <div class="edit-grid">
+    <div class="edit-row full"><label for="editName">Название бинда</label><input type="text" id="editName" placeholder="Например: Приветствие"></div>
+    <div class="edit-row full"><label>Горячая клавиша — нажмите комбинацию или кнопку мыши</label><div class="hotkey-input-wrap"><input type="text" id="editHotkey" placeholder="Кликните и нажмите комбинацию…" readonly><button class="hk-btn undo" id="hkUndo" title="Вернуть предыдущее значение"><i class="fa-solid fa-rotate-left"></i></button><button class="hk-btn clear" id="hkClear" title="Очистить клавишу"><i class="fa-solid fa-eraser"></i></button></div><div class="hk-hint ok" id="hkHint"><i class="fa-solid fa-circle-info"></i> Кликните в поле; Escape отменяет захват</div></div>
+    <div class="edit-row"><label for="editCategory">Категория</label><select id="editCategory"><option>Основные</option><option>Лечение</option><option>Медосмотр</option><option>Вакцины</option><option>Операции</option><option>Быстрые</option><option>Утилиты</option><option>RP</option></select></div>
+    <div class="edit-row"><label for="editStatType">Тип статистики</label><select id="editStatType"><option value="">— Не считать</option><option value="pills">💊 Таблетки</option><option value="inject">💉 Уколы</option><option value="operation">🔪 Операции</option><option value="medcheck">📋 Медосмотры</option><option value="vaccine">🛡 Вакцины</option></select></div>
+    <div class="edit-row"><label class="checkbox-row"><input type="checkbox" id="editEnabled"><span>Бинд активен</span></label></div>
+   </div>
+   <section class="lines-section">
+    <div class="lines-header"><h3><i class="fa-solid fa-list"></i> Строки <span id="editLinesCount">0</span></h3><div class="lines-header-actions"><button class="pin-btn active" id="pinBtn" title="Открепить панель переменных"><i class="fa-solid fa-thumbtack"></i></button><button class="btn-small success" id="addEditLine"><i class="fa-solid fa-plus"></i> Добавить строку</button></div></div>
+    <div class="vars-bar pinned" id="varsBar"></div>
+    <div class="quick-command-bar"><span>Команды:</span><button class="tag-btn command-tag" data-insert="/я ">/я</button><button class="tag-btn command-tag" data-insert="/фд ">/фд</button><button class="tag-btn command-tag" data-insert="/де ">/де</button><button class="tag-btn command-tag" data-insert="/шепот ">/шепот</button></div>
+    <div class="delay-toolbar"><label for="applyDelayValue">Задержка для всех строк</label><input type="number" id="applyDelayValue" min="0" max="60000" step="100" placeholder="мс"><select id="delayPreset"><option value="">Пресет…</option><option value="0">0 • базовая</option><option value="1200">1200 мс • быстро</option><option value="2300">2300 мс • обычно</option><option value="4500">4500 мс • RP</option></select><button class="btn-small" id="applyDelayAll"><i class="fa-solid fa-arrow-down-wide-short"></i> Применить ко всем</button><span class="editor-shortcuts">Ctrl+S сохранить · Ctrl+Z отменить · Ctrl+D копировать строку</span></div>
+    <div class="edit-lines" id="editLinesList"></div>
+    <div class="preview-box" id="editPreview"><strong>Предпросмотр:</strong> выберите строку</div>
+   </section>
+  </div>
+  <div class="modal-footer"><button class="btn-outline warning" id="undoEditor" title="До 20 состояний"><i class="fa-solid fa-rotate-left"></i> Undo <span id="undoEditorCount">0/20</span></button><button class="btn-outline warning" id="undoAll">Откатить всё</button><button class="btn-outline danger" id="cancelEditor">Отмена</button><button class="btn-primary" id="saveEditor"><i class="fa-solid fa-floppy-disk"></i> Сохранить бинд</button></div>
+ </div>
 </div>
 
-<div class="modal-overlay" id="varsModal" style="display:none;">
-    <div class="modal">
-        <div class="modal-header">
-            <h2><i class="fa-solid fa-code"></i> Управление переменными</h2>
-            <i class="fa-solid fa-xmark close-x" onclick="closeVarsEditor()"></i>
-        </div>
-        <div class="modal-body">
-            <div class="reserved-hint">
-                <b>Встроенные переменные</b> (заполняются автоматически): {P}, {MY}, {HOSPITAL}, {SPECIALTY}
-            </div>
-            <div class="vars-list" id="varsList"></div>
-            <button class="btn-small success" onclick="addVarRow()"><i class="fa-solid fa-plus"></i> Добавить переменную</button>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-outline danger" onclick="closeVarsEditor()" style="width: auto; padding: 10px 20px;">Отмена</button>
-            <button class="btn-primary" onclick="saveVars()" style="padding: 10px 25px; font-weight: 600;"><i class="fa-solid fa-floppy-disk"></i> Сохранить</button>
-        </div>
-    </div>
-</div>
+<div class="modal-overlay" id="varsModal" style="display:none"><div class="modal"><div class="modal-header"><h2><i class="fa-solid fa-code"></i> Управление переменными</h2><button class="icon-button" id="varsClose"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body"><div class="reserved-hint"><b>Встроенные переменные</b> (подставляются автоматически): {P}, {MY}, {HOSPITAL}, {RANK}, {SPECIALTY}</div><div class="vars-list" id="varsList"></div><button class="btn-small success" id="addVar"><i class="fa-solid fa-plus"></i> Добавить переменную</button></div><div class="modal-footer"><button class="btn-outline danger" id="cancelVars">Отмена</button><button class="btn-primary" id="saveVars"><i class="fa-solid fa-floppy-disk"></i> Применить</button></div></div></div>
+
+<div class="modal-overlay" id="profileModal" style="display:none"><div class="modal modal-narrow"><div class="modal-header"><h2><i class="fa-regular fa-user"></i> Профиль врача</h2><button class="icon-button" data-close="profileModal"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body form-stack"><label>Имя персонажа<input id="profileNameInput" type="text" maxlength="80"></label><label>Больница<input id="profileHospitalInput" type="text" maxlength="80"></label><label>Ранг<input id="profileRankInput" type="text" maxlength="80"></label><label>Специальность<input id="profileSpecialtyInput" type="text" maxlength="80"></label><p class="hint-text">«Определить ник» читает локальную командную строку GTA / значение SA-MP из реестра. Профиль остаётся локальным.</p></div><div class="modal-footer modal-footer-split"><button class="btn-outline" id="profileAutofill"><i class="fa-solid fa-wand-magic-sparkles"></i> Определить ник</button><span><button class="btn-outline danger" data-close="profileModal">Отмена</button><button class="btn-primary" id="saveProfile">Сохранить профиль</button></span></div></div></div>
+
+<div class="modal-overlay" id="patientModal" style="display:none"><div class="modal modal-narrow"><div class="modal-header"><h2><i class="fa-solid fa-id-card"></i> ID пациента</h2><button class="icon-button" data-close="patientModal"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body form-stack"><label>ID (1–5 цифр)<input id="patientIdInput" type="text" inputmode="numeric" maxlength="5" autocomplete="off" placeholder="Например, 12345"></label><p class="hint-text">ID хранится только в памяти текущего сеанса и не записывается в config.</p></div><div class="modal-footer modal-footer-split"><button class="btn-outline danger" id="clearPatient">Очистить ID</button><span><button class="btn-outline" data-close="patientModal">Отмена</button><button class="btn-primary" id="savePatient">Применить</button></span></div></div></div>
+
+<div class="modal-overlay" id="statsModal" style="display:none"><div class="modal modal-stats"><div class="modal-header"><h2><i class="fa-solid fa-chart-simple"></i> Статистика</h2><button class="icon-button" data-close="statsModal"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body"><div class="stats-grid" id="statsGrid"></div><div class="stats-session" id="statsSession"></div></div><div class="modal-footer"><button class="btn-outline danger" id="resetStats"><i class="fa-solid fa-trash-can"></i> Сбросить статистику</button><button class="btn-primary" data-close="statsModal">Готово</button></div></div></div>
+
+<div class="modal-overlay" id="helpModal" style="display:none"><div class="modal modal-help"><div class="modal-header"><h2><i class="fa-solid fa-circle-question"></i> Справка MedBind</h2><button class="icon-button" data-close="helpModal"><i class="fa-solid fa-xmark"></i></button></div><nav class="help-tabs"><button class="active" data-help-tab="overlay">Overlay</button><button data-help-tab="syntax">Переменные и команды</button><button data-help-tab="about">О программе</button></nav><div class="modal-body help-content" id="helpContent"></div><div class="modal-footer"><button class="btn-primary" data-close="helpModal">Закрыть</button></div></div></div>
+
+<div class="modal-overlay" id="filtersModal" style="display:none"><div class="modal modal-narrow"><div class="modal-header"><h2><i class="fa-solid fa-filter"></i> Пользовательские фильтры</h2><button class="icon-button" data-close="filtersModal"><i class="fa-solid fa-xmark"></i></button></div><div class="modal-body form-stack"><label>Фильтр для редактирования<select id="filterExisting"></select></label><label>Название<input id="filterName" maxlength="60" placeholder="Например: Лечение — активно"></label><label>Условие<input id="filterCondition" maxlength="300" placeholder="category=Лечение&enabled=true"></label><div class="hint-text">Поддерживаются условия через &amp;: category=Лечение, enabled=true/false, empty=true/false, statType=pills, hotkey=Alt+2. Встроенные фильтры защищены от перезаписи.</div></div><div class="modal-footer modal-footer-split"><button class="btn-outline danger" id="deleteFilter">Удалить выбранный</button><span><button class="btn-outline" data-close="filtersModal">Закрыть</button><button class="btn-primary" id="saveFilter">Сохранить фильтр</button></span></div></div></div>
+
+<div class="modal-overlay" id="settingsModal" style="display:none"><div class="modal modal-settings"><div class="modal-header"><h2><i class="fa-solid fa-gear"></i> Настройки MedBind</h2><button class="icon-button" data-close="settingsModal"><i class="fa-solid fa-xmark"></i></button></div><div class="settings-layout"><nav class="settings-tabs"><button class="active" data-settings-tab="general"><i class="fa-solid fa-sliders"></i> Общие</button><button data-settings-tab="notifications"><i class="fa-regular fa-bell"></i> Уведомления</button><button data-settings-tab="hotkeys"><i class="fa-regular fa-keyboard"></i> Хоткеи и Overlay</button><button data-settings-tab="screenshots"><i class="fa-regular fa-image"></i> Скриншоты</button><button data-settings-tab="data"><i class="fa-solid fa-box-archive"></i> Данные</button></nav><div class="settings-content">
+ <section class="settings-page active" data-settings-page="general"><h3>Игровой ввод и задержки</h3><div class="settings-grid"><label>Клавиша открытия чата<div class="capture-setting"><input id="chatKeyCapture" readonly><button class="hk-btn" data-capture="system:chatKey"><i class="fa-solid fa-keyboard"></i></button><button class="hk-btn clear" data-clear-capture="system:chatKey"><i class="fa-solid fa-eraser"></i></button></div></label><label>Формат ID в чате<select id="patientFormat"><option value="plain">ID — только цифры</option><option value="quote">"ID — в кавычке</option><option value="at">@ID</option></select></label><label class="setting-check full"><input type="checkbox" id="onlyGTA"><span>Отправлять только при активном окне GTA</span></label><label>Задержка между строками (мс)<input type="number" id="baseDelay" min="0" max="60000"></label><label>После открытия чата (мс)<input type="number" id="afterChatDelay" min="0" max="30000"></label><label>После Enter (мс)<input type="number" id="afterEnterDelay" min="0" max="30000"></label><label>Случайный разброс (мс)<input type="number" id="jitter" min="0" max="60000"></label><label>Прозрачность Overlay <span id="opacityValue"></span><input type="range" id="overlayOpacity" min="100" max="255"></label><label class="setting-check"><input type="checkbox" id="editorAutoSaveDelay"><span>Сразу применять изменение задержки в редакторе</span></label></div><div class="preset-row"><span>Пресеты задержек:</span><button class="btn-small" data-delay-preset="fast">⚡ Быстро</button><button class="btn-small" data-delay-preset="norm">👌 Норма</button><button class="btn-small" data-delay-preset="rp">🐢 Full RP</button></div><p class="hint-text">Пресеты меняют все четыре тайминга. Выберите подходящие правилам сервера значения.</p></section>
+ <section class="settings-page" data-settings-page="notifications"><h3>Оповещения и чатлог</h3><p class="hint-text">Chatlog читается только локально из папки SA-MP. Уведомления упоминаний и просьб показываются, когда окно игры не активно.</p><div class="settings-check-list"><label class="setting-check"><input type="checkbox" id="notifySms"><span>Входящие SMS (звук и номер отправителя)</span></label><label class="setting-check"><input type="checkbox" id="notifyMention"><span>Упоминание имени персонажа в чате</span></label><label class="setting-check"><input type="checkbox" id="notifyKeywords"><span>Ключевые слова: врач, лечи, таблетка, доктор и др.</span></label></div><div class="info-card"><i class="fa-solid fa-shield-halved"></i><span>Никакие сообщения или данные профиля не отправляются по сети. Launch telemetry старого скрипта намеренно исключена.</span></div></section>
+ <section class="settings-page" data-settings-page="hotkeys"><h3>Системные клавиши</h3><p class="hint-text">Кликните поле и нажмите клавишу или комбинацию. Поддерживаются клавиатура и кнопки мыши; Escape отменяет захват. Конфликты проверяются до применения.</p><div class="hotkey-settings-grid" id="hotkeySettingsGrid"></div><h3 class="subheading">Радиальное меню</h3><label class="setting-check"><input type="checkbox" id="enableWheel"><span>Включить удерживаемое радиальное меню</span></label><div class="wheel-settings"><label>⬆ Верх<select id="wheelTop"></select></label><label>➡ Право<select id="wheelRight"></select></label><label>⬇ Низ<select id="wheelBottom"></select></label><label>⬅ Лево<select id="wheelLeft"></select></label></div><div class="toolbar-row"><button class="btn-outline" id="testRadial"><i class="fa-solid fa-circle-play"></i> Проверить в GTA</button><button class="btn-outline" id="showOverlay"><i class="fa-solid fa-table-list"></i> Показать полный Overlay</button><button class="btn-outline" id="showMiniOverlay"><i class="fa-solid fa-window-minimize"></i> Показать mini Overlay</button></div></section>
+ <section class="settings-page" data-settings-page="screenshots"><h3>Автоматическая сортировка скриншотов</h3><label class="setting-check"><input type="checkbox" id="autoScreen"><span>Делать F8 и сортировать скриншот при совпадении фразы в chatlog</span></label><p class="hint-text">F8 отправляется только если GTA активна. Свежий снимок перемещается в выбранную папку внутри подпапки с датой.</p><div class="rules-heading"><span>Правила</span><button class="btn-small success" id="addScreenRule"><i class="fa-solid fa-plus"></i> Добавить</button></div><div class="screen-rules-list" id="screenRulesList"></div></section>
+ <section class="settings-page" data-settings-page="data"><h3>Профили и резервные копии</h3><p class="hint-text">Импорт поддерживает INI/ACI. Экспорт создаёт совместимый INI-профиль. Общий config и пользовательские фильтры автоматически получают резервную копию перед сохранением.</p><div class="data-actions"><button class="btn-outline" id="importProfile"><i class="fa-solid fa-file-import"></i> Импорт INI / ACI</button><button class="btn-outline" id="exportProfile"><i class="fa-solid fa-file-export"></i> Экспорт профиля</button><button class="btn-outline warning" id="restoreBackup"><i class="fa-solid fa-clock-rotate-left"></i> Восстановить последнюю копию</button><button class="btn-outline warning" id="resetSettings"><i class="fa-solid fa-rotate"></i> Настройки по умолчанию</button><button class="btn-outline warning" id="resetBinds"><i class="fa-solid fa-kit-medical"></i> Стандартные бинды</button><button class="btn-outline danger" id="clearAllBinds"><i class="fa-solid fa-trash"></i> Удалить все бинды</button></div><div class="info-card"><i class="fa-solid fa-file-shield"></i><span>Существующие doctor_config.ini и doctor_filters.ini читаются без переименования и обновляются совместимым форматом.</span></div></section>
+ </div></div><div class="modal-footer"><button class="btn-outline" data-close="settingsModal">Закрыть</button><button class="btn-primary" id="saveSettings"><i class="fa-solid fa-check"></i> Применить настройки</button></div></div></div>
 
 <div class="toast-container" id="toastContainer"></div>
 
 <script>
-    let ALL_BINDS = [];
-    let CURRENT_BIND = null;
-    let CURRENT_CATEGORY = "";
-    let BINDER_ENABLED = true;
-    let EDIT_LINES = [];
-    let EDIT_BIND_ID = null;
-    let USER_VARS = [];
-    let lastFocusedLineInput = null;
-    let EDIT_SNAPSHOT = null;
-    let varsSticky = true;
+'use strict';
 
-    // === ЗАХВАТ ХОТКЕЯ ===
-    let hkCaptureActive = false;
-    let hkCapturedKey = '';
-    let hkPreviousKey = '';
-    let hkOriginalKey = '';
-    let hkCaptureTimer = null;
-    let pressedMods = { ctrl: false, alt: false, shift: false, win: false };
+const US = '\x1f';
+let ALL_BINDS = [];
+let EMPTY_SLOTS = [];
+let FILTERS = [];
+let USER_VARS = [];
+let SETTINGS = {};
+let STATS = {};
+let PROFILE = {};
+let CURRENT_FILTER = 'Все';
+let CURRENT_HELP_TAB = 'overlay';
+let CURRENT_BIND_ID = null;
+let EDIT_BIND_ID = null;
+let EDIT_LINES = [];
+let EDIT_SNAPSHOT = null;
+let EDIT_UNDO = [];
+let varsSticky = true;
+let BINDER_ENABLED = true;
+let IS_SENDING = false;
+let GLOBAL_DIRTY = false;
+let GAME_ACTIVE = false;
+let editorHotkey = '';
+let previousEditorHotkey = '';
+let activeCaptureTarget = '';
+let activeCaptureElement = null;
+let capturePreviousValue = '';
+let pendingBindPayload = null;
+let filterOriginalName = '';
+let settingsDraftDirty = false;
+let settingsRuleRows = [];
+let nextRuleRowId = 1;
 
-    const RESERVED_KEYS = ['F1', 'F5', 'F8', 'F9', 'F10', 'F11', 'F12', 'Escape', 'p', 'c'];
-    const MODIFIER_KEYS = ['Control', 'Alt', 'Shift', 'Meta', 'CapsLock', 'ContextMenu'];
+const categoryIcons = {
+ 'Основные':'fa-comment','Лечение':'fa-heart-pulse','Медосмотр':'fa-clipboard-list','Вакцины':'fa-syringe',
+ 'Операции':'fa-scalpel','Быстрые':'fa-bolt','Утилиты':'fa-wrench','RP':'fa-user'
+};
+const builtInFilterOrder = ['Все','Основные','Лечение','Медосмотр','Вакцины','Операции','Быстрые','Утилиты','Активные','Пустые'];
 
-    // === ПРИЁМ ИЗ AHK ===
-    if (window.chrome && window.chrome.webview) {
-        window.chrome.webview.addEventListener('message', (event) => {
-            let data = event.data;
-            if (typeof data === 'string') {
-                if (data.startsWith('win:')) return;
-                if (data.startsWith('status:')) { parseStatus(data.substring(7)); return; }
-                if (data.startsWith('notify:')) {
-                    try { const n = JSON.parse(data.substring(7)); showToast(n.text, n.type); } catch(e){}
-                    return;
-                }
-                if (data.startsWith('open_editor:')) {
-                    const id = parseInt(data.substring(12));
-                    setTimeout(() => openEditor(id), 400);
-                    return;
-                }
-                if (data.startsWith('hotkey_capture_mods:')) {
-                    if (hkCaptureActive) {
-                        const m = data.substring(20).split(',').map(x => x === '1');
-                        pressedMods = { ctrl: !!m[0], alt: !!m[1], shift: !!m[2], win: !!m[3] };
-                        updateCapturePreview();
-                    }
-                    return;
-                }
-                if (data.startsWith('hotkey_captured:')) {
-                    const hk = data.substring(16);
-                    if (hkCaptureActive) {
-                        hkCapturedKey = hk;
-                        hkPreviousKey = hk;
-                        hkInput.value = formatHotkey(hk);
-                        updateHkHint();
-                        hkInput.blur();
-                    }
-                    return;
-                }
-                if (data === 'hotkey_capture_cancel') {
-                    if (hkCaptureActive) {
-                        hkCapturedKey = hkPreviousKey;
-                        hkInput.value = formatHotkey(hkPreviousKey);
-                        hkInput.blur();
-                    }
-                    return;
-                }
-                if (data === 'hotkey_capture_clear') {
-                    if (hkCaptureActive) {
-                        hkCapturedKey = '';
-                        hkInput.value = '';
-                        updateHkHint();
-                    }
-                    return;
-                }
-                if (data.startsWith('bind_saved:')) { closeEditor(); return; }
-                try { data = JSON.parse(data); } catch(e) { return; }
-            }
-            if (data && data.binds) {
-                ALL_BINDS = data.binds;
-                if (data.profile) {
-                    document.getElementById('profileName').textContent = data.profile.name || 'Укажите ник';
-                    document.getElementById('profileHospital').textContent =
-                        (data.profile.hospital || '') + ' • ' + (data.profile.specialty || '') + (data.profile.rank ? ' • ' + data.profile.rank : '');
-                }
-                if (data.variables) USER_VARS = data.variables;
-                renderCategories();
-                renderBinds();
-                if (EDIT_BIND_ID !== null) {
-                    const refreshed = ALL_BINDS.find(b => b.id === EDIT_BIND_ID);
-                    if (refreshed) CURRENT_BIND = refreshed;
-                }
-            }
-        });
-    } else {
-        document.getElementById('bindsList').innerHTML =
-            '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>WebView2 не найден</div>';
-    }
+function post(message) {
+ if (window.chrome && window.chrome.webview) window.chrome.webview.postMessage(message);
+}
 
-    function parseStatus(s) {
-        s.split(';').forEach(part => {
-            const [k, v] = part.split('=');
-            if (k === 'binder') {
-                BINDER_ENABLED = v === '1';
-                const toggle = document.getElementById('binderToggle');
-                if (toggle) toggle.checked = BINDER_ENABLED;
-                document.getElementById('binderStateText').textContent = BINDER_ENABLED ? 'v4.0 • АКТИВЕН' : 'v4.0 • ВЫКЛ';
-            }
-            if (k === 'sending')
-                document.getElementById('statusSub').textContent = v === '1' ? '⏳ ОТПРАВКА...' : 'Готов • Ожидание';
-        });
-    }
+if (window.chrome && window.chrome.webview) {
+ window.chrome.webview.addEventListener('message', event => handleHostMessage(event.data));
+ post('request_data');
+} else {
+ document.getElementById('bindsList').innerHTML = '<div class="empty-state"><i class="fa-solid fa-triangle-exclamation"></i>WebView2 не найден</div>';
+}
 
-    function showToast(text, type = 'info') {
-        const container = document.getElementById('toastContainer');
-        const el = document.createElement('div');
-        el.className = 'toast ' + type;
-        el.textContent = text;
-        container.appendChild(el);
-        setTimeout(() => {
-            el.style.transition = 'opacity 0.3s, transform 0.3s';
-            el.style.opacity = '0';
-            el.style.transform = 'translateX(100%)';
-            setTimeout(() => el.remove(), 300);
-        }, 2500);
-    }
+function handleHostMessage(data) {
+ if (typeof data !== 'string') {
+  if (data && Array.isArray(data.binds)) renderData(data);
+  return;
+ }
+ if (data.startsWith('status:')) { parseStatus(data.slice(7)); return; }
+ if (data.startsWith('notify:')) { try { const n=JSON.parse(data.slice(7)); showToast(n.text,n.type); } catch {} return; }
+ if (data.startsWith('open_editor:')) { openEditor(parseInt(data.slice(12),10)); return; }
+ if (data === 'open_patient') { openPatientModal(); return; }
+ if (data.startsWith('patient_saved:')) { closeModal('patientModal'); showToast(data.slice(14) ? 'ID пациента установлен' : 'ID пациента очищен','success'); return; }
+ if (data === 'profile_saved') { closeModal('profileModal'); showToast('Профиль сохранён в текущих данных','success'); return; }
+ if (data.startsWith('profile_autofilled:')) {
+  const name=data.slice(19); const input=document.getElementById('profileNameInput'); if(input) input.value=name;
+  showToast('Ник определён из локальных данных GTA','success'); return;
+ }
+ if (data === 'settings_saved') { settingsDraftDirty=false; showToast('Настройки применены. Для записи в INI нажмите «Сохранить»','success'); return; }
+ if (data === 'vars_saved') { closeModal('varsModal'); showToast('Переменные применены','success'); return; }
+ if (data.startsWith('bind_saved:')) { pendingBindPayload=null; closeEditor(true); showToast('Бинд сохранён','success'); return; }
+ if (data.startsWith('filter_saved:')) { filterOriginalName=''; showToast('Фильтр сохранён','success'); return; }
+ if (data.startsWith('hotkey_capture_started:')) return;
+ if (data.startsWith('hotkey_capture_mods:')) { handleCaptureMods(data); return; }
+ if (data.startsWith('hotkey_capture_preview:')) { handleCapturePreview(data); return; }
+ if (data.startsWith('hotkey_captured:')) { handleCaptured(data); return; }
+ if (data.startsWith('hotkey_capture_cancel:')) { cancelCapture(false); return; }
+ if (data.startsWith('hotkey_capture_timeout:')) { cancelCapture(false); showToast('Время захвата истекло; прежняя клавиша сохранена','warning'); return; }
+ if (data.startsWith('hotkey_capture_stopped:')) { if(activeCaptureTarget) finishCaptureUi(); return; }
+ if (data.startsWith('hotkey_conflict_bind:')) { confirmBackendConflict(parseInt(data.slice('hotkey_conflict_bind:'.length),10)); return; }
+ if (data.startsWith('hotkey_conflict_system:')) { showToast('Эта клавиша занята системным действием и не может быть назначена бинду','error'); return; }
+ if (data.startsWith('settings_conflict_bind:')) { showToast('Системная клавиша конфликтует со слотом '+data.slice('settings_conflict_bind:'.length)+'; назначьте бинду другую клавишу','error'); return; }
+ if (data.startsWith('folder_selected:')) { handleFolderSelected(data); return; }
+ if (data === 'settings_reset') { settingsDraftDirty=false; populateSettings(); showToast('Настройки сброшены к значениям по умолчанию','success'); return; }
+ try { renderData(JSON.parse(data)); } catch {}
+}
 
-    function sendWinCmd(cmd) {
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('win:' + cmd);
-    }
-    document.getElementById('btnClose').onclick = () => sendWinCmd('close');
-    document.getElementById('btnMin').onclick   = () => sendWinCmd('min');
-    document.getElementById('btnMax').onclick   = () => sendWinCmd('max');
-    document.getElementById('binderToggle').onchange = () => {
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('toggle_binder');
-    };
+function parseStatus(text) {
+ const state={};
+ text.split(';').forEach(part=>{const i=part.indexOf('=');if(i>0)state[part.slice(0,i)]=part.slice(i+1);});
+ BINDER_ENABLED=state.binder==='1'; IS_SENDING=state.sending==='1'; GAME_ACTIVE=state.game==='1'; GLOBAL_DIRTY=state.dirty==='1';
+ const toggle=document.getElementById('binderToggle'); if(toggle)toggle.checked=BINDER_ENABLED;
+ document.getElementById('binderStateText').textContent=BINDER_ENABLED?'v4.1 • АКТИВЕН':'v4.1 • ВЫКЛЮЧЕН';
+ document.getElementById('statusTitle').textContent=IS_SENDING?'MedBind • ОТПРАВКА…':(BINDER_ENABLED?'MedBind • ГОТОВ':'MedBind • ВЫКЛЮЧЕН');
+ document.getElementById('statusSub').textContent=GAME_ACTIVE?'GTA активна'+(GLOBAL_DIRTY?' • Есть несохранённые изменения':' • Готов к работе'):'Ожидание GTA'+(GLOBAL_DIRTY?' • Есть несохранённые изменения':'');
+ document.getElementById('btnSaveAll').classList.toggle('dirty',GLOBAL_DIRTY);
+ document.getElementById('btnSaveAll').title=GLOBAL_DIRTY?'Есть несохранённые изменения • Сохранить (Ctrl+S)':'Все изменения сохранены';
+}
 
-    function renderCategories() {
-        const cats = {};
-        ALL_BINDS.forEach(b => {
-            const c = b.category || 'Без категории';
-            cats[c] = (cats[c] || 0) + 1;
-        });
-        const list = document.getElementById('categoryList');
-        list.innerHTML = '<li class="menu-item active" data-category=""><div style="display:flex; align-items:center; gap:10px;"><i class="fa-solid fa-house"></i> Все бинды</div><span class="count">' + ALL_BINDS.length + '</span></li>';
-        const icons = {
-            'Основные': 'fa-comment', 'Лечение': 'fa-heart-pulse',
-            'Медосмотр': 'fa-clipboard-list', 'Вакцины': 'fa-syringe',
-            'Операции': 'fa-scalpel', 'Быстрые': 'fa-bolt',
-            'Утилиты': 'fa-wrench', 'RP': 'fa-user'
-        };
-        Object.keys(cats).sort().forEach(cat => {
-            const icon = icons[cat] || 'fa-folder';
-            const li = document.createElement('li');
-            li.className = 'menu-item';
-            li.dataset.category = cat;
-            li.innerHTML = `<div style="display:flex; align-items:center; gap:10px;"><i class="fa-solid ${icon}"></i> ${cat}</div><span class="count" style="color: var(--text-muted);">${cats[cat]}</span>`;
-            li.onclick = () => selectCategory(cat);
-            list.appendChild(li);
-        });
-        list.querySelector('[data-category=""]').onclick = () => selectCategory("");
-    }
+function renderData(data) {
+ ALL_BINDS=Array.isArray(data.binds)?data.binds:[];
+ EMPTY_SLOTS=Array.isArray(data.emptySlots)?data.emptySlots:[];
+ FILTERS=Array.isArray(data.filters)?data.filters:[];
+ USER_VARS=Array.isArray(data.variables)?data.variables:[];
+ SETTINGS=data.settings||{}; STATS=data.stats||{}; PROFILE=data.profile||{};
+ if(typeof data.dirty==='boolean')GLOBAL_DIRTY=data.dirty;
+ document.getElementById('profileName').textContent=PROFILE.name||'Укажите ник';
+ document.getElementById('profileHospital').textContent=[PROFILE.hospital,PROFILE.specialty,PROFILE.rank].filter(Boolean).join(' • ')||'Профиль не заполнен';
+ updatePatientDisplay(data.patientId||'');
+ renderCategories(); renderBinds(); renderVarsBar();
+ if(CURRENT_BIND_ID!==null){const current=ALL_BINDS.find(b=>b.id===CURRENT_BIND_ID);if(current)renderDetails(current);else{CURRENT_BIND_ID=null;renderDetails(null);}}
+ document.getElementById('btnUndo').disabled=!data.canUndo;
+ document.getElementById('btnSaveAll').classList.toggle('dirty',GLOBAL_DIRTY);
+ if(isModalOpen('statsModal'))renderStats();
+ if(isModalOpen('filtersModal'))renderFilterSelector();
+}
 
-    function selectCategory(cat) {
-        CURRENT_CATEGORY = cat;
-        document.querySelectorAll('.menu-item').forEach(el => {
-            el.classList.toggle('active', el.dataset.category === cat);
-        });
-        renderBinds();
-    }
+function updatePatientDisplay(id) {
+ const out=document.getElementById('patientDisplay');
+ out.dataset.id=id;
+ out.textContent=id?formatPatient(id):'ID не задан';
+ out.classList.toggle('has-id',!!id);
+}
+function formatPatient(id) {
+ const fmt=SETTINGS.patientFormat||'plain'; return fmt==='at'?'@'+id:fmt==='quote'?'"'+id:id;
+}
+function showToast(text,type='info') {
+ const container=document.getElementById('toastContainer'); const el=document.createElement('div');
+ el.className='toast '+(type||'info'); el.textContent=String(text||''); container.appendChild(el);
+ setTimeout(()=>{el.style.transition='opacity .25s,transform .25s';el.style.opacity='0';el.style.transform='translateX(30px)';setTimeout(()=>el.remove(),260);},2800);
+}
+function escapeHtml(value) { return String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
+function normalizeKey(hk) {
+ let s=String(hk||'').trim().replace(/[$~*<>]/g,''); let mods='';
+ while(s && '^!+#'.includes(s[0])){if(!mods.includes(s[0]))mods+=s[0];s=s.slice(1);}
+ const ordered='^!+#'.split('').filter(ch=>mods.includes(ch)).join('');
+ const low=s.toLowerCase(); const aliases={'pageup':'PgUp','page up':'PgUp','pagedown':'PgDn','page down':'PgDn','esc':'Escape','spacebar':'Space','middle':'MButton','mouse middle':'MButton','mouse left':'LButton','mouse right':'RButton','mouse x1':'XButton1','mouse x2':'XButton2'};
+ return ordered+(aliases[low]||(/^[a-z]$/i.test(s)?s.toUpperCase():s));
+}
+function formatHotkey(hk) {
+ const s=normalizeKey(hk); if(!s)return '—'; let i=0,mods=[];
+ const map={'^':'Ctrl','!':'Alt','+':'Shift','#':'Win'};
+ while(i<s.length&&map[s[i]]){mods.push(map[s[i]]);i++;}
+ let key=s.slice(i); const keyMap={'PgUp':'Page Up','PgDn':'Page Down','NumpadAdd':'Num +','NumpadSub':'Num −','NumpadMult':'Num ×','NumpadDiv':'Num /','NumpadDot':'Num .','MButton':'Mouse 3','LButton':'Mouse 1','RButton':'Mouse 2','XButton1':'Mouse 4','XButton2':'Mouse 5','WheelUp':'Wheel ↑','WheelDown':'Wheel ↓','Escape':'Esc'};
+ key=keyMap[key]||key; return (mods.length?mods.join(' + ')+' + ':'')+key;
+}
+function sendWin(cmd){post('win:'+cmd);}
+function updateAppClock(){const now=new Date();const clock=document.getElementById('appClock');if(clock)clock.textContent=now.toLocaleTimeString('ru-RU',{hour:'2-digit',minute:'2-digit',second:'2-digit',hour12:false});}
+updateAppClock();setInterval(updateAppClock,1000);
 
-    function renderBinds() {
-        const list = document.getElementById('bindsList');
-        const search = (document.getElementById('searchInput').value || '').toLowerCase();
-        let filtered = ALL_BINDS;
-        if (CURRENT_CATEGORY)
-            filtered = filtered.filter(b => (b.category || 'Без категории') === CURRENT_CATEGORY);
-        if (search)
-            filtered = filtered.filter(b =>
-                (b.name || '').toLowerCase().includes(search) ||
-                (b.hotkey || '').toLowerCase().includes(search) ||
-                (b.category || '').toLowerCase().includes(search));
-        document.getElementById('bindsCount').textContent = filtered.length + ' биндов';
-        if (filtered.length === 0) {
-            list.innerHTML = '<div class="empty-state"><i class="fa-solid fa-inbox"></i>Ничего не найдено</div>';
-            return;
-        }
-        list.innerHTML = '';
-        filtered.forEach((bind, i) => {
-            const card = document.createElement('div');
-            card.className = 'bind-card';
-            card.style.animationDelay = (i * 0.03) + 's';
-            card.dataset.id = bind.id;
-            const statusClass = bind.enabled ? 'active' : 'disabled';
-            const statusText = bind.enabled ? 'Активен' : 'Выключен';
-            const icon = getBindIcon(bind.category);
-            card.innerHTML = `
-                <div class="bind-icon"><i class="fa-solid ${icon}"></i></div>
-                <div class="bind-info">
-                    <h3>${escapeHtml(bind.name)}</h3>
-                    <p>${escapeHtml(bind.preview || '...')}</p>
-                    <div class="bind-tags">
-                        ${bind.category ? `<span class="tag"><i class="fa-solid fa-folder"></i> ${escapeHtml(bind.category)}</span>` : ''}
-                    </div>
-                </div>
-                <div class="bind-actions">
-                    <div class="hotkey-badge">${escapeHtml(formatHotkey(bind.hotkey))}</div>
-                    <div class="status-dot"><div class="dot ${statusClass}"></div> ${statusText}</div>
-                    <div class="line-count"><i class="fa-solid fa-list"></i> ${bind.lineCount || 0}</div>
-                </div>
-            `;
-            card.onclick = () => selectBind(bind);
-            card.ondblclick = () => {
-                if (window.chrome && window.chrome.webview)
-                    window.chrome.webview.postMessage('run_bind:' + bind.id);
-            };
-            list.appendChild(card);
-        });
-    }
+function renderCategories() {
+ const counts={}; ALL_BINDS.forEach(b=>{const c=b.category||'Без категории';counts[c]=(counts[c]||0)+1;});
+ const list=document.getElementById('categoryList'); list.innerHTML='';
+ const entries=[];
+ const allCount=ALL_BINDS.length;
+ entries.push({name:'Все',icon:'fa-house',count:allCount});
+ FILTERS.filter(f=>f.builtin&&f.name!=='Все').forEach(f=>{if(['Основные','Лечение','Медосмотр','Вакцины','Операции','Быстрые','Утилиты','Активные','Пустые'].includes(f.name))entries.push({name:f.name,icon:f.name==='Активные'?'fa-circle-check':f.name==='Пустые'?'fa-inbox':(categoryIcons[f.name]||'fa-folder'),count:filterCount(f)});});
+ FILTERS.filter(f=>!f.builtin).forEach(f=>entries.push({name:f.name,icon:'fa-star',count:filterCount(f)}));
+ const known=new Set(entries.map(e=>e.name));Object.keys(counts).sort().forEach(name=>{if(!known.has(name))entries.push({name,icon:categoryIcons[name]||'fa-folder',count:counts[name]});});
+ for(const entry of entries){const li=document.createElement('li');li.className='menu-item'+(CURRENT_FILTER===entry.name?' active':'');li.dataset.filter=entry.name;li.innerHTML=`<div class="menu-item-label"><i class="fa-solid ${entry.icon}"></i><span>${escapeHtml(entry.name)}</span></div><span class="count">${entry.count}</span>`;li.onclick=()=>selectFilter(entry.name);list.appendChild(li);}
+}
+function emptySlotRecords(){return EMPTY_SLOTS.map(id=>({id,empty:true,name:'Свободный слот '+id,category:'',enabled:false,hotkey:'',lineCount:0,preview:'Нажмите, чтобы создать бинд в этом слоте'}));}
+function filterUsesEmptySlots(filter){return String(filter?.condition||'').split('&').some(clause=>/^\s*empty\s*=\s*true\s*$/i.test(clause));}
+function filterCount(filter) {
+ if(!filter||filter.name==='Все')return ALL_BINDS.length;
+ const source=filterUsesEmptySlots(filter)?emptySlotRecords():ALL_BINDS;
+ return source.filter(b=>matchesFilter(b,filter)).length;
+}
+function selectFilter(name){CURRENT_FILTER=name;document.getElementById('listTitle').textContent=name;renderCategories();renderBinds();}
+function matchesFilter(bind,filter) {
+ if(!filter||!filter.condition)return true;
+ const clauses=String(filter.condition).split('&').map(s=>s.trim()).filter(Boolean);
+ return clauses.every(clause=>{const p=clause.indexOf('=');if(p<0)return false;const key=clause.slice(0,p).trim().toLowerCase();const value=clause.slice(p+1).trim();
+  if(key==='category')return (bind.category||'')===value;
+  if(key==='enabled')return String(!!bind.enabled)===value.toLowerCase();
+  if(key==='empty')return String(!!bind.empty)===value.toLowerCase();
+  if(key==='stattype')return (bind.statType||'')===value;
+  if(key==='hotkey')return normalizeKey(bind.hotkey).toLowerCase()===normalizeKey(value).toLowerCase();
+  return false;});
+}
+function renderBinds() {
+ const list=document.getElementById('bindsList'); const search=(document.getElementById('searchInput').value||'').trim().toLowerCase();
+ const filter=FILTERS.find(f=>f.name===CURRENT_FILTER)||(CURRENT_FILTER==='Все'?{name:'Все',condition:''}:{name:CURRENT_FILTER,condition:'category='+CURRENT_FILTER});
+ const source=filterUsesEmptySlots(filter)?emptySlotRecords():ALL_BINDS;
+ let records=source.filter(b=>matchesFilter(b,filter));
+ if(search)records=records.filter(b=>{const corpus=[b.name,b.hotkey,b.category,b.preview,...(b.lines||[]).map(l=>l.text)].join(' ').toLowerCase();return corpus.includes(search);});
+ document.getElementById('bindsCount').textContent=records.length+' '+(CURRENT_FILTER==='Пустые'?'свободных слотов':'биндов');
+ if(!records.length){list.innerHTML='<div class="empty-state"><i class="fa-solid fa-inbox"></i>Ничего не найдено</div>';return;}
+ list.innerHTML='';
+ records.forEach((bind,i)=>{const card=document.createElement('div');card.className='bind-card'+(bind.id===CURRENT_BIND_ID?' active':'')+(bind.empty?' empty-slot-card':'')+(!bind.enabled&&!bind.empty?' bind-disabled':'');card.style.animationDelay=(Math.min(i,12)*.02)+'s';card.dataset.id=bind.id;
+  if(bind.empty){card.innerHTML=`<div class="bind-icon"><i class="fa-solid fa-plus"></i></div><div class="bind-info"><h3>${escapeHtml(bind.name)}</h3><p>${escapeHtml(bind.preview)}</p><div class="bind-tags"><span class="tag">Слот ${bind.id} / 100</span></div></div><span class="empty-slot-cta">Создать <i class="fa-solid fa-arrow-right"></i></span>`;card.onclick=()=>post('create_bind_slot:'+bind.id);}
+  else{card.innerHTML=`<div class="bind-icon"><i class="fa-solid ${categoryIcons[bind.category]||'fa-bolt'}"></i></div><div class="bind-info"><h3>${escapeHtml(bind.name)}</h3><p>${escapeHtml(bind.preview||'—')}</p><div class="bind-tags"><span class="tag"><i class="fa-solid fa-folder"></i>${escapeHtml(bind.category||'Без категории')}</span>${bind.statType?`<span class="tag">${escapeHtml(statTypeLabel(bind.statType))}</span>`:''}</div></div><div class="bind-actions"><span class="hotkey-badge">${escapeHtml(formatHotkey(bind.hotkey))}</span><span class="status-dot"><span class="dot ${bind.enabled?'active':'disabled'}"></span>${bind.enabled?'Активен':'Выключен'}</span><span class="line-count"><i class="fa-solid fa-list"></i>${bind.lineCount||0}</span></div>`;card.onclick=()=>selectBind(bind);card.ondblclick=e=>{e.preventDefault();openEditor(bind.id);};}
+  list.appendChild(card);});
+}
+function statTypeLabel(type){return ({pills:'Таблетки',inject:'Уколы',operation:'Операции',medcheck:'Медосмотр',vaccine:'Вакцины'})[type]||type;}
+function selectBind(bind){CURRENT_BIND_ID=bind.id;document.querySelectorAll('.bind-card').forEach(el=>el.classList.toggle('active',Number(el.dataset.id)===bind.id));renderDetails(bind);}
+function renderDetails(bind){const panel=document.getElementById('detailsPanel');if(!bind){panel.innerHTML='<div class="empty-state" style="padding-top:100px"><i class="fa-regular fa-hand-pointer"></i>Выберите бинд из списка,<br>чтобы посмотреть детали</div>';return;}
+ const lines=(bind.lines||[]).map((line,i)=>`<div class="command-item"><span class="command-index">${i+1}</span><span class="cmd-text">${escapeHtml(line.text||'')}</span><span class="cmd-delay">${line.delay>0?line.delay+' мс':'базовая'}</span></div>`).join('');
+ panel.innerHTML=`<div class="detail-header"><div class="detail-icon"><i class="fa-solid ${categoryIcons[bind.category]||'fa-bolt'}"></i></div><h2>${escapeHtml(bind.name)}</h2><p>${escapeHtml(bind.preview||'')}</p><span class="category-badge">${escapeHtml(bind.category||'Без категории')}</span></div><div class="detail-props"><div class="prop-row"><span class="prop-label"><i class="fa-regular fa-keyboard"></i> Клавиша</span><span class="hotkey-badge">${escapeHtml(formatHotkey(bind.hotkey))}</span></div><div class="prop-row"><span class="prop-label"><i class="fa-solid fa-toggle-on"></i> Статус</span><span class="prop-value ${bind.enabled?'active':''}">${bind.enabled?'Активен':'Выключен'}</span></div><div class="prop-row"><span class="prop-label"><i class="fa-solid fa-list"></i> Строк</span><span class="prop-value">${bind.lineCount||0}</span></div><div class="prop-row"><span class="prop-label"><i class="fa-solid fa-chart-line"></i> Статистика</span><span class="prop-value">${escapeHtml(bind.statType?statTypeLabel(bind.statType):'Не считается')}</span></div></div><div class="commands-list"><h3><i class="fa-solid fa-terminal"></i> Последовательность отправки</h3>${lines||'<p class="hint-text">Нет строк</p>'}</div><div class="action-buttons"><button class="btn-outline success" data-action="run"><i class="fa-solid fa-play"></i> Запуск</button><button class="btn-outline" data-action="edit"><i class="fa-solid fa-pen"></i> Изменить</button><button class="btn-outline" data-action="toggle"><i class="fa-solid fa-power-off"></i> ${bind.enabled?'Выключить':'Включить'}</button><button class="btn-outline" data-action="copy"><i class="fa-regular fa-copy"></i> Копия</button><button class="btn-outline danger" data-action="delete"><i class="fa-regular fa-trash-can"></i> Удалить</button></div>`;
+ panel.querySelectorAll('[data-action]').forEach(btn=>btn.onclick=()=>{switch(btn.dataset.action){case'run':post('run_bind:'+bind.id);break;case'edit':openEditor(bind.id);break;case'toggle':post('toggle_bind:'+bind.id);break;case'copy':post('copy_bind:'+bind.id);break;case'delete':if(confirm('Удалить бинд «'+bind.name+'»? Это можно отменить через Undo.'))post('delete_bind:'+bind.id);break;}});
+}
 
-    function getBindIcon(cat) {
-        const icons = {
-            'Основные': 'fa-comment', 'Лечение': 'fa-heart-pulse',
-            'Медосмотр': 'fa-clipboard-list', 'Вакцины': 'fa-syringe',
-            'Операции': 'fa-scalpel', 'Быстрые': 'fa-bolt',
-            'Утилиты': 'fa-wrench', 'RP': 'fa-user'
-        };
-        return icons[cat] || 'fa-comment';
-    }
+function deepClone(value){return JSON.parse(JSON.stringify(value));}
+function setEditorSelectValue(id,value){const select=document.getElementById(id);const next=String(value??'');if(!Array.from(select.options).some(option=>option.value===next)){const option=document.createElement('option');option.value=next;option.textContent=next+' (сохранённое значение)';select.appendChild(option);}select.value=next;}
+function openEditor(id){const bind=ALL_BINDS.find(b=>b.id===id);if(!bind)return;EDIT_BIND_ID=id;CURRENT_BIND_ID=id;EDIT_LINES=(bind.lines||[]).map(l=>({text:l.text||'',delay:Number(l.delay)||0,pendingDelay:null}));EDIT_SNAPSHOT={name:bind.name||'',hotkey:bind.hotkey||'',category:bind.category||'Основные',statType:bind.statType||'',enabled:!!bind.enabled,lines:EDIT_LINES.map(l=>({text:l.text,delay:l.delay,pendingDelay:null}))};EDIT_UNDO=[];editorHotkey=normalizeKey(bind.hotkey);previousEditorHotkey=editorHotkey;
+ document.getElementById('editTitle').textContent='Редактирование слота '+id+' / 100';document.getElementById('editName').value=bind.name||'';document.getElementById('editHotkey').value=formatHotkey(editorHotkey);setEditorSelectValue('editCategory',bind.category||'Основные');setEditorSelectValue('editStatType',bind.statType||'');document.getElementById('editEnabled').checked=!!bind.enabled;renderVarsBar();renderEditLines();updateHotkeyHint();openModal('editModal');setTimeout(()=>document.getElementById('editName').focus(),80);}
+function openEditorFromNew(id){openEditor(id);}
+function editorState(){return {name:document.getElementById('editName').value,hotkey:editorHotkey,category:document.getElementById('editCategory').value,statType:document.getElementById('editStatType').value,enabled:document.getElementById('editEnabled').checked,lines:EDIT_LINES.map(l=>({text:l.text,delay:l.delay,pendingDelay:l.pendingDelay}))};}
+function pushEditorUndo(snapshot=null){const snap=deepClone(snapshot||editorState());const last=EDIT_UNDO.length?EDIT_UNDO[EDIT_UNDO.length-1]:null;if(last&&JSON.stringify(last)===JSON.stringify(snap))return;EDIT_UNDO.push(snap);if(EDIT_UNDO.length>20)EDIT_UNDO.shift();updateEditorUndoButton();}
+function updateEditorUndoButton(){const btn=document.getElementById('undoEditor');btn.disabled=EDIT_UNDO.length===0;document.getElementById('undoEditorCount').textContent=EDIT_UNDO.length+'/20';}
+function undoEditor(){if(!EDIT_UNDO.length){showToast('Нет предыдущих изменений в редакторе','warning');return;}const s=EDIT_UNDO.pop();restoreEditorState(s);updateEditorUndoButton();showToast('Изменение отменено','info');}
+function restoreEditorState(s){document.getElementById('editName').value=s.name;editorHotkey=s.hotkey;document.getElementById('editHotkey').value=formatHotkey(editorHotkey);setEditorSelectValue('editCategory',s.category);setEditorSelectValue('editStatType',s.statType);document.getElementById('editEnabled').checked=s.enabled;EDIT_LINES=s.lines.map(l=>({text:l.text,delay:l.delay,pendingDelay:l.pendingDelay??null}));renderEditLines();updateHotkeyHint();}
+function closeEditor(force=false){if(!isModalOpen('editModal'))return;if(!force&&isEditorChanged()&&!confirm('Закрыть редактор и потерять несохранённые изменения?'))return;stopCapture(true);closeModal('editModal');EDIT_BIND_ID=null;EDIT_LINES=[];EDIT_UNDO=[];EDIT_SNAPSHOT=null;pendingBindPayload=null;}
+function isEditorChanged(){if(!EDIT_SNAPSHOT)return false;return JSON.stringify(editorState())!==JSON.stringify(EDIT_SNAPSHOT);}
+function undoAll(){if(!EDIT_SNAPSHOT||!confirm('Откатить поля и строки к состоянию при открытии редактора?'))return;restoreEditorState(EDIT_SNAPSHOT);EDIT_UNDO=[];updateEditorUndoButton();showToast('Откат к исходному состоянию выполнен','success');}
+function toggleVarsSticky(){varsSticky=!varsSticky;const bar=document.getElementById('varsBar');bar.classList.toggle('pinned',varsSticky);document.getElementById('pinBtn').classList.toggle('active',varsSticky);document.getElementById('pinBtn').title=varsSticky?'Открепить панель переменных':'Закрепить панель переменных';}
+function renderVarsBar(){const bar=document.getElementById('varsBar');bar.innerHTML='<span>Переменные:</span>';const builtins=['{P}','{MY}','{HOSPITAL}','{RANK}','{SPECIALTY}'];builtins.forEach(tag=>{const b=document.createElement('button');b.className='tag-btn';b.textContent=tag;b.onmousedown=e=>e.preventDefault();b.onclick=()=>insertAtCaret(tag);bar.appendChild(b);});USER_VARS.forEach(v=>{const b=document.createElement('button');b.className='tag-btn custom';b.textContent='{'+v.name+'}';b.onmousedown=e=>e.preventDefault();b.onclick=()=>insertAtCaret('{'+v.name+'}');bar.appendChild(b);});}
+function renderEditLines(){const box=document.getElementById('editLinesList');box.innerHTML='';document.getElementById('editLinesCount').textContent=EDIT_LINES.length+' строк';EDIT_LINES.forEach((line,index)=>{const el=document.createElement('div');el.className='edit-line'+(line.pendingDelay!==null?' has-pending':'');el.dataset.index=index;el.innerHTML=`<div class="line-num">${index+1}</div><textarea class="line-text" rows="2" data-field="text" data-index="${index}" placeholder="Текст сообщения…">${escapeHtml(line.text)}</textarea><div class="line-delay-wrap"><label>мс</label><input type="number" class="line-delay" data-field="delay" data-index="${index}" value="${line.pendingDelay!==null?escapeHtml(line.pendingDelay):line.delay}" min="0" max="60000" step="100" title="0 = общая базовая задержка">${line.pendingDelay!==null?'<button class="apply-one-delay" data-action="apply-delay" title="Применить задержку"><i class="fa-solid fa-check"></i></button>':''}</div><button class="move-btn" data-action="up" title="Вверх"><i class="fa-solid fa-arrow-up"></i></button><button class="move-btn" data-action="down" title="Вниз"><i class="fa-solid fa-arrow-down"></i></button><button data-action="duplicate" title="Копировать строку"><i class="fa-regular fa-copy"></i></button><button data-action="remove" title="Удалить строку"><i class="fa-solid fa-trash"></i></button>`;box.appendChild(el);});
+ box.querySelectorAll('.line-text').forEach(input=>{input.addEventListener('focus',()=>updatePreview(Number(input.dataset.index)));input.addEventListener('input',()=>{const i=Number(input.dataset.index);if(EDIT_LINES[i].text!==input.value){pushEditorUndo();EDIT_LINES[i].text=input.value;updatePreview(i);}});});
+ box.querySelectorAll('.line-delay').forEach(input=>input.addEventListener('input',()=>{const i=Number(input.dataset.index);const value=Math.max(0,Math.min(60000,Number(input.value)||0));if(SETTINGS.editorAutoSaveDelay){if(EDIT_LINES[i].delay!==value){pushEditorUndo();EDIT_LINES[i].delay=value;EDIT_LINES[i].pendingDelay=null;input.closest('.edit-line').classList.remove('has-pending');}}else{const pending=input.value===''?0:value;if(String(EDIT_LINES[i].pendingDelay)!==String(pending)){pushEditorUndo();EDIT_LINES[i].pendingDelay=pending;}input.closest('.edit-line').classList.add('has-pending');if(!input.closest('.line-delay-wrap').querySelector('.apply-one-delay')){const btn=document.createElement('button');btn.className='apply-one-delay';btn.dataset.action='apply-delay';btn.title='Применить задержку';btn.innerHTML='<i class="fa-solid fa-check"></i>';input.after(btn);}}}));
+ box.onclick=e=>{const btn=e.target.closest('[data-action]');if(!btn)return;const row=btn.closest('.edit-line');const i=Number(row.dataset.index);switch(btn.dataset.action){case'up':moveEditLine(i,-1);break;case'down':moveEditLine(i,1);break;case'duplicate':duplicateEditLine(i);break;case'remove':removeEditLine(i);break;case'apply-delay':applyOneDelay(i);break;}};
+}
+function addEditLine(){pushEditorUndo();const delay=EDIT_LINES.length?EDIT_LINES[EDIT_LINES.length-1].delay:(Number(SETTINGS.baseDelay)||2300);EDIT_LINES.push({text:'',delay,pendingDelay:null});renderEditLines();const inputs=document.querySelectorAll('.line-text');if(inputs.length)inputs[inputs.length-1].focus();}
+function removeEditLine(i){if(EDIT_LINES.length<=1){showToast('В бинде должна остаться хотя бы одна строка','warning');return;}pushEditorUndo();EDIT_LINES.splice(i,1);renderEditLines();}
+function moveEditLine(i,dir){const j=i+dir;if(j<0||j>=EDIT_LINES.length)return;pushEditorUndo();[EDIT_LINES[i],EDIT_LINES[j]]=[EDIT_LINES[j],EDIT_LINES[i]];renderEditLines();}
+function duplicateEditLine(i){if(!EDIT_LINES[i])return;pushEditorUndo();EDIT_LINES.splice(i+1,0,{text:EDIT_LINES[i].text,delay:EDIT_LINES[i].delay,pendingDelay:null});renderEditLines();showToast('Строка скопирована','success');}
+function applyOneDelay(i){if(!EDIT_LINES[i])return;pushEditorUndo();const value=Number(EDIT_LINES[i].pendingDelay)||0;EDIT_LINES[i].delay=Math.max(0,Math.min(60000,value));EDIT_LINES[i].pendingDelay=null;renderEditLines();}
+function applyDelayToAll(){const raw=document.getElementById('applyDelayValue').value;const value=raw===''?document.getElementById('delayPreset').value:Number(raw);if(value===''||!Number.isFinite(Number(value))){showToast('Выберите пресет или укажите задержку','warning');return;}pushEditorUndo();const delay=Math.max(0,Math.min(60000,Number(value)));EDIT_LINES.forEach(l=>{l.delay=delay;l.pendingDelay=null;});document.getElementById('applyDelayValue').value='';document.getElementById('delayPreset').value='';renderEditLines();showToast('Задержка применена ко всем строкам','success');}
+function insertAtCaret(text){const input=document.activeElement&&document.activeElement.classList.contains('line-text')?document.activeElement:document.querySelector('.line-text:focus')||document.querySelector('.line-text');if(!input){showToast('Добавьте строку для вставки','warning');return;}const i=Number(input.dataset.index);const start=input.selectionStart??input.value.length;const end=input.selectionEnd??start;pushEditorUndo();input.value=input.value.slice(0,start)+text+input.value.slice(end);EDIT_LINES[i].text=input.value;input.focus();input.setSelectionRange(start+text.length,start+text.length);updatePreview(i);}
+function updatePreview(i){const box=document.getElementById('editPreview');if(i===undefined||!EDIT_LINES[i]){box.innerHTML='<strong>Предпросмотр:</strong> выберите строку';return;}let text=EDIT_LINES[i].text;const replacements={'P':formatPatient(document.getElementById('patientDisplay').dataset.id||'[ID]'),'MY':PROFILE.name||'[Имя]','HOSPITAL':PROFILE.hospital||'[Больница]','RANK':PROFILE.rank||'[Ранг]','SPECIALTY':PROFILE.specialty||'[Специальность]'};Object.entries(replacements).forEach(([k,v])=>text=text.replaceAll('{'+k+'}',v));USER_VARS.forEach(v=>{if(v.name)text=text.replaceAll('{'+v.name+'}',v.value||'['+v.name+']');});box.innerHTML='<strong>Предпросмотр:</strong> '+escapeHtml(text||'—');}
 
-    function selectBind(bind) {
-        CURRENT_BIND = bind;
-        document.querySelectorAll('.bind-card').forEach(c => {
-            c.classList.toggle('active', String(c.dataset.id) === String(bind.id));
-        });
-        const panel = document.getElementById('detailsPanel');
-        const lines = (bind.lines || []).map((l, i) => `
-            <div class="command-item">
-                <span class="cmd-text">${i+1} &nbsp; ${escapeHtml(l.text)}</span>
-                <span class="cmd-delay">${((l.delay||0)/1000).toFixed(1)}c</span>
-            </div>
-        `).join('');
-        panel.innerHTML = `
-            <div class="detail-header">
-                <div class="detail-icon"><i class="fa-solid ${getBindIcon(bind.category)}"></i></div>
-                <h2>${escapeHtml(bind.name)}</h2>
-                <p>${escapeHtml((bind.lines && bind.lines[0]) ? bind.lines[0].text : '...')}</p>
-                ${bind.category ? `<div class="category-badge"><i class="fa-solid fa-folder"></i> ${escapeHtml(bind.category)}</div>` : ''}
-            </div>
-            <div class="detail-props">
-                <div class="prop-row">
-                    <div class="prop-label"><i class="fa-regular fa-keyboard"></i> Горячая клавиша</div>
-                    <div class="prop-value">${escapeHtml(formatHotkey(bind.hotkey))}</div>
-                </div>
-                <div class="prop-row">
-                    <div class="prop-label"><i class="fa-solid fa-circle-check"></i> Статус</div>
-                    <div class="prop-value ${bind.enabled ? 'active' : ''}">
-                        <div class="dot ${bind.enabled ? 'active' : 'disabled'}"></div> ${bind.enabled ? 'Активен' : 'Выключен'}
-                    </div>
-                </div>
-                <div class="prop-row">
-                    <div class="prop-label"><i class="fa-solid fa-list"></i> Строки</div>
-                    <div class="prop-value">${bind.lineCount || 0}</div>
-                </div>
-                <div class="prop-row">
-                    <div class="prop-label"><i class="fa-solid fa-chart-simple"></i> Тип статистики</div>
-                    <div class="prop-value">${escapeHtml(bind.statType || '—')}</div>
-                </div>
-            </div>
-            <div class="commands-list">
-                <h3><i class="fa-regular fa-file-lines"></i> Список команд</h3>
-                ${lines || '<div style="color: var(--text-muted); font-size: 11px; text-align: center; padding: 10px;">Нет строк</div>'}
-            </div>
-            <div class="action-buttons">
-                <button class="btn-outline success" onclick="runCurrentBind()"><i class="fa-solid fa-play"></i> Запуск</button>
-                <button class="btn-outline" onclick="editCurrentBind()"><i class="fa-solid fa-pen"></i> Изменить</button>
-                <button class="btn-outline danger" onclick="deleteCurrentBind()"><i class="fa-regular fa-trash-can"></i> Удалить</button>
-                <button class="btn-outline" onclick="copyCurrentBind()"><i class="fa-regular fa-copy"></i> Копия</button>
-            </div>
-        `;
-    }
+function startCapture(target,element){stopCapture(true);if(target==='bind')previousEditorHotkey=editorHotkey;activeCaptureTarget=target;activeCaptureElement=element;capturePreviousValue=element.value||'';element.classList.add('capturing');element.placeholder='Нажмите клавишу или кнопку мыши…';element.value='ОЖИДАНИЕ…';post('start_hk_capture:'+target);}
+function finishCaptureUi(){if(activeCaptureElement){activeCaptureElement.classList.remove('capturing');activeCaptureElement.placeholder='';}activeCaptureTarget='';activeCaptureElement=null;capturePreviousValue='';}
+function stopCapture(send=true){if(!activeCaptureTarget)return;if(send)post('stop_hk_capture');if(activeCaptureElement){activeCaptureElement.classList.remove('capturing');activeCaptureElement.value=capturePreviousValue;activeCaptureElement.placeholder='';}activeCaptureTarget='';activeCaptureElement=null;capturePreviousValue='';}
+function cancelCapture(send=true){if(!activeCaptureTarget)return;if(send)post('stop_hk_capture');if(activeCaptureElement){activeCaptureElement.classList.remove('capturing');activeCaptureElement.value=capturePreviousValue;activeCaptureElement.placeholder='';}activeCaptureTarget='';activeCaptureElement=null;capturePreviousValue='';}
+function handleCaptureMods(message){if(!activeCaptureTarget)return;const marker=message.indexOf(':');const rest=message.slice(marker+1);const parts=rest.split(US);if(parts[0]!==activeCaptureTarget)return;const m=(parts[1]||'').split(',');const mods=[];if(m[0]==='1')mods.push('Ctrl');if(m[1]==='1')mods.push('Alt');if(m[2]==='1')mods.push('Shift');if(m[3]==='1')mods.push('Win');if(activeCaptureElement)activeCaptureElement.value=mods.length?mods.join(' + ')+' + …':'Нажмите клавишу…';}
+function handleCapturePreview(message){if(!activeCaptureTarget)return;const rest=message.slice('hotkey_capture_preview:'.length);const parts=rest.split(US);if(parts[0]!==activeCaptureTarget)return;if(activeCaptureElement)activeCaptureElement.value=formatHotkey(parts[1]||'');}
+function handleCaptured(message){const rest=message.slice('hotkey_captured:'.length);const parts=rest.split(US);const target=parts[0],key=normalizeKey(parts[1]||'');if(!activeCaptureTarget||target!==activeCaptureTarget)return;
+ if(target==='bind'){pushEditorUndo();editorHotkey=key;document.getElementById('editHotkey').value=formatHotkey(key);updateHotkeyHint();}
+ else if(target==='system:chatKey'){document.getElementById('chatKeyCapture').value=key;settingsDraftDirty=true;updateSettingsHotkeyHints();}
+ else if(target.startsWith('system:')){const name=target.slice(7);const input=document.getElementById('hk-'+name);if(input)input.value=key;settingsDraftDirty=true;updateSettingsHotkeyHints();}
+ finishCaptureUi();}
+function clearCapture(target){const input=target==='bind'?document.getElementById('editHotkey'):target==='system:chatKey'?document.getElementById('chatKeyCapture'):document.getElementById('hk-'+target.slice(7));if(!input)return;if(target==='bind'){pushEditorUndo();previousEditorHotkey=editorHotkey;editorHotkey='';input.value='';updateHotkeyHint();}else if(target==='system:chatKey'){input.value='';settingsDraftDirty=true;updateSettingsHotkeyHints();}else{input.value='';settingsDraftDirty=true;updateSettingsHotkeyHints();}}
+function updateHotkeyHint(){const hint=document.getElementById('hkHint');const input=document.getElementById('editHotkey');const key=normalizeKey(editorHotkey);input.classList.remove('conflict','reserved','empty-ok');if(!key){input.classList.add('empty-ok');hint.className='hk-hint ok';hint.textContent='Пустая клавиша допустима. Escape отменяет захват.';return;}const system=systemConflict(key);if(system){input.classList.add('conflict');hint.className='hk-hint conflict';hint.textContent='Зарезервировано системным действием: '+system;return;}const conflict=ALL_BINDS.find(b=>b.id!==EDIT_BIND_ID&&normalizeKey(b.hotkey).toLowerCase()===key.toLowerCase());if(conflict){input.classList.add('conflict');hint.className='hk-hint conflict';hint.textContent='Занято биндом «'+conflict.name+'» — потребуется подтверждение замены.';return;}hint.className='hk-hint ok';hint.textContent='Клавиша свободна';}
+function systemConflict(key){const h=SETTINGS.hotkeys||{};for(const [name,value] of Object.entries(h)){if(normalizeKey(value).toLowerCase()===key.toLowerCase())return ({overlay:'полным Overlay',miniOverlay:'mini Overlay',stopSending:'остановкой отправки',replySms:'ответом на SMS',wheel:'радиальным меню',mainGui:'главным окном'})[name]||name;}if(normalizeKey(SETTINGS.chatKey).toLowerCase()===key.toLowerCase()||key.toLowerCase()==='sc029')return 'открытием чата';return '';}
+function confirmBackendConflict(id){if(!pendingBindPayload)return;const bind=ALL_BINDS.find(b=>b.id===id);if(!bind)return;const yes=confirm('Клавиша занята биндом «'+bind.name+'». Снять клавишу с него и сохранить текущий бинд?');if(yes){pendingBindPayload[7]=String(id);post(pendingBindPayload.join(US));}else pendingBindPayload=null;}
+function saveEditor(){if(!EDIT_BIND_ID)return;const name=document.getElementById('editName').value.trim();if(!name){showToast('Введите название бинда','warning');return;}if(!EDIT_LINES.length){showToast('Добавьте хотя бы одну строку','warning');return;}
+ const unapplied=EDIT_LINES.some(l=>l.pendingDelay!==null);if(unapplied&&!SETTINGS.editorAutoSaveDelay){if(!confirm('Есть задержки, которые ещё не применены. Применить их перед сохранением?'))return;pushEditorUndo();EDIT_LINES.forEach(l=>{if(l.pendingDelay!==null){l.delay=Math.max(0,Math.min(60000,Number(l.pendingDelay)||0));l.pendingDelay=null;}});}
+ const key=normalizeKey(editorHotkey);const system=systemConflict(key);if(key&&system){showToast('Клавиша зарезервирована: '+system,'error');return;}
+ let replaceId=0;const conflict=key?ALL_BINDS.find(b=>b.id!==EDIT_BIND_ID&&normalizeKey(b.hotkey).toLowerCase()===key.toLowerCase()):null;if(conflict){if(!confirm('Клавиша занята биндом «'+conflict.name+'». При сохранении она будет снята с него. Продолжить?'))return;replaceId=conflict.id;}
+ const parts=['save_bind',String(EDIT_BIND_ID),name,key,document.getElementById('editCategory').value,document.getElementById('editEnabled').checked?'1':'0',document.getElementById('editStatType').value,String(replaceId),String(EDIT_LINES.length)];EDIT_LINES.forEach(l=>{parts.push(l.text);parts.push(String(l.delay));});pendingBindPayload=parts;post(parts.join(US));}
 
-    function runCurrentBind() {
-        if (!CURRENT_BIND) return;
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('run_bind:' + CURRENT_BIND.id);
-    }
-    function editCurrentBind() { if (CURRENT_BIND) openEditor(CURRENT_BIND.id); }
-    function deleteCurrentBind() {
-        if (!CURRENT_BIND) return;
-        if (!confirm('Удалить бинд "' + CURRENT_BIND.name + '"?')) return;
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('delete_bind:' + CURRENT_BIND.id);
-    }
-    function copyCurrentBind() {
-        if (!CURRENT_BIND) return;
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('copy_bind:' + CURRENT_BIND.id);
-    }
-    function createBind() {
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('create_bind');
-    }
+function openVars(){renderVarsList();openModal('varsModal');}
+function renderVarsList(){const list=document.getElementById('varsList');list.innerHTML='';const builtins=[['P','ID пациента'],['MY','Имя персонажа'],['HOSPITAL','Больница'],['RANK','Ранг'],['SPECIALTY','Специальность']];builtins.forEach(([name,label])=>{const row=document.createElement('div');row.className='var-row reserved';row.innerHTML=`<span class="var-tag">{${name}}</span><i class="fa-solid fa-arrow-right var-arrow"></i><input value="${escapeHtml(label)}" readonly><span class="var-reserved-label">встроенная</span>`;list.appendChild(row);});USER_VARS.forEach((v,i)=>{const row=document.createElement('div');row.className='var-row';row.innerHTML=`<input class="var-name" maxlength="40" value="${escapeHtml(v.name)}" placeholder="ИМЯ"><i class="fa-solid fa-arrow-right var-arrow"></i><input class="var-value" value="${escapeHtml(v.value)}" placeholder="Значение"><button class="var-del" title="Удалить"><i class="fa-solid fa-trash"></i></button>`;row.querySelector('.var-name').oninput=e=>{v.name=e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g,'');e.target.value=v.name;};row.querySelector('.var-value').oninput=e=>v.value=e.target.value;row.querySelector('.var-del').onclick=()=>{USER_VARS.splice(i,1);renderVarsList();};list.appendChild(row);});}
+function addVar(){USER_VARS.push({name:'',value:''});renderVarsList();const inputs=document.querySelectorAll('.var-name');if(inputs.length)inputs[inputs.length-1].focus();}
+function saveVars(){const seen=new Set();for(const v of USER_VARS){if(!/^[A-Z0-9_]+$/.test(v.name)){showToast('Имя переменной должно содержать латинские буквы, цифры и _','warning');return;}if(['P','MY','HOSPITAL','RANK','SPECIALTY'].includes(v.name)){showToast('Имя '+v.name+' зарезервировано','warning');return;}if(seen.has(v.name)){showToast('Повтор имени '+v.name,'warning');return;}seen.add(v.name);}const parts=['save_vars',String(USER_VARS.length)];USER_VARS.forEach(v=>{parts.push(v.name,v.value);});post(parts.join(US));}
 
-    function openEditor(bindId) {
-        const bind = ALL_BINDS.find(b => b.id === bindId);
-        if (!bind) return;
-        EDIT_BIND_ID = bindId;
+function openProfile(){document.getElementById('profileNameInput').value=PROFILE.name||'';document.getElementById('profileHospitalInput').value=PROFILE.hospital||'';document.getElementById('profileRankInput').value=PROFILE.rank||'';document.getElementById('profileSpecialtyInput').value=PROFILE.specialty||'';openModal('profileModal');}
+function saveProfile(){const parts=['save_profile',document.getElementById('profileNameInput').value.trim(),document.getElementById('profileHospitalInput').value.trim(),document.getElementById('profileRankInput').value.trim(),document.getElementById('profileSpecialtyInput').value.trim()];post(parts.join(US));}
+function openPatientModal(){const input=document.getElementById('patientIdInput');input.value=(document.getElementById('patientDisplay').dataset.id||'');openModal('patientModal');setTimeout(()=>input.focus(),50);}
+function savePatient(){const input=document.getElementById('patientIdInput');const id=input.value.trim();if(id&&!/^\d{1,5}$/.test(id)){showToast('ID должен быть от 1 до 5 цифр','warning');return;}post('set_patient:'+id);}
+function clearPatient(){post('clear_patient');closeModal('patientModal');}
 
-        document.getElementById('editTitle').textContent = 'Редактирование: ' + bind.name;
-        document.getElementById('editName').value = bind.name || '';
-        document.getElementById('editHotkey').value = formatHotkey(bind.hotkey);
-        hkOriginalKey = bind.hotkey || '';
-        hkPreviousKey = bind.hotkey || '';
-        hkCapturedKey = bind.hotkey || '';
-        document.getElementById('editCategory').value = bind.category || 'Основные';
-        document.getElementById('editStatType').value = bind.statType || '';
-        document.getElementById('editEnabled').checked = !!bind.enabled;
-        EDIT_LINES = (bind.lines || []).map(l => ({ text: l.text, delay: l.delay }));
-        if (EDIT_LINES.length === 0) EDIT_LINES.push({ text: '', delay: 2300 });
+function renderStats(){const cards=[['Отправлено строк',STATS.totalSent||0,'fa-paper-plane'],['Пациентов вылечено',STATS.patientsHealed||0,'fa-heart-pulse'],['Таблеток выдано',STATS.pillsGiven||0,'fa-pills'],['Уколов сделано',STATS.injectionsGiven||0,'fa-syringe'],['Операций',STATS.operationsDone||0,'fa-scalpel'],['Медосмотров',STATS.medChecks||0,'fa-clipboard-check'],['Вакцин',STATS.vaccinesGiven||0,'fa-shield-virus']];document.getElementById('statsGrid').innerHTML=cards.map(([label,value,icon])=>`<div class="stat-card"><i class="fa-solid ${icon}"></i><span>${escapeHtml(label)}</span><b>${Number(value).toLocaleString('ru-RU')}</b></div>`).join('');document.getElementById('statsSession').textContent='Сеанс начат: '+(STATS.sessionStart||'—');}
+function openStats(){renderStats();openModal('statsModal');}
+function openHelp(){switchHelpTab(CURRENT_HELP_TAB);openModal('helpModal');}
+function switchHelpTab(tab){
+ CURRENT_HELP_TAB=tab;
+ document.querySelectorAll('[data-help-tab]').forEach(b=>b.classList.toggle('active',b.dataset.helpTab===tab));
+ const content=document.getElementById('helpContent');const hotkeys=SETTINGS.hotkeys||{};
+ if(tab==='overlay'){
+  const entries=[
+   [formatHotkey(hotkeys.overlay),'Показать / скрыть полный Overlay'],
+   [formatHotkey(hotkeys.miniOverlay),'Показать / скрыть mini Overlay'],
+   [formatHotkey(hotkeys.stopSending),'Остановить отправку'],
+   [formatHotkey(hotkeys.replySms),'Ответить на последнее SMS'],
+   [formatHotkey(hotkeys.wheel)+' (удерживать)','Радиальное меню'],
+   [formatHotkey(hotkeys.mainGui),'Показать / скрыть главное окно'],
+   ['↑ / ↓','Выбрать бинд в полном Overlay'],['Enter','Запустить выбранный бинд'],
+   ['1–0','Быстрый выбор 1–10 в полном Overlay'],['PgUp / PgDn','Страницы полного Overlay'],
+   ['P / C','Ввести / очистить ID пациента'],['Esc','Закрыть полный Overlay']
+  ];
+  content.innerHTML='<h3>Overlay и системные клавиши</h3><p>Хоткеи ниже берутся из текущих настроек. Клавиатурная навигация Overlay работает, когда GTA активна и игровой чат закрыт. В mini Overlay доступны P и C; список биндов есть в полном Overlay.</p><div class="help-shortcuts">'+entries.map(([key,label])=>`<div class="help-shortcut"><b>${escapeHtml(key||'—')}</b><span>${escapeHtml(label)}</span></div>`).join('')+'</div><h3 style="margin-top:20px">Быстрые клавиши интерфейса</h3><div class="help-shortcuts"><div class="help-shortcut"><b>Ctrl+K</b><span>Поиск биндов</span></div><div class="help-shortcut"><b>Ctrl+S</b><span>Сохранить всё / бинд</span></div><div class="help-shortcut"><b>Ctrl+Z</b><span>Undo</span></div><div class="help-shortcut"><b>Ctrl+D</b><span>Дублировать строку в редакторе</span></div><div class="help-shortcut"><b>Ctrl+Enter</b><span>Сохранить бинд</span></div><div class="help-shortcut"><b>Esc</b><span>Закрыть окно или отменить захват</span></div></div>';
+ }else if(tab==='syntax'){
+  const custom=USER_VARS.length?'<ul class="help-list">'+USER_VARS.map(v=>`<li><code>{${escapeHtml(v.name)}}</code> — ${escapeHtml(v.value||'пустое значение')}</li>`).join('')+'</ul>':'<p>Пользовательских переменных пока нет. Создайте их в разделе «Переменные».</p>';
+  content.innerHTML='<h3>Переменные и быстрые команды</h3><ul class="help-list"><li><code>{P}</code> — ID пациента в выбранном формате</li><li><code>{MY}</code> — имя персонажа</li><li><code>{HOSPITAL}</code> — больница</li><li><code>{RANK}</code> — ранг</li><li><code>{SPECIALTY}</code> — специальность</li></ul><p>Пример: «Здравствуйте, я {MY} из {HOSPITAL}. Ваш ID — {P}.» Значения подставляются при отправке.</p><h3>Пользовательские переменные</h3>'+custom+'<h3 style="margin-top:18px">Команды чата</h3><p>В редакторе используйте быстрые вставки /я, /фд, /де и /шепот. Строки отправляются сверху вниз; задержку можно задать отдельно для каждой строки или применить ко всем.</p>';
+ }else{
+  content.innerHTML='<h3>MedBind 4.1</h3><p>Локальный биндер для медицинской роли GTA SAMP RP. Данные профиля, переменные, статистика и настройки хранятся в совместимых локальных INI-файлах.</p><p>Запуск команд защищён проверкой наличия GTA и игрового чата. Настройка «Отправлять только при активном окне GTA» определяет, можно ли активировать игру перед отправкой. Во время длинной последовательности доступна команда «Стоп».</p><p>Сетевой сбор данных и Telegram launch telemetry из старого скрипта не используются.</p>';
+ }
+}
 
-        EDIT_SNAPSHOT = {
-            name: bind.name || '',
-            hotkey: bind.hotkey || '',
-            category: bind.category || 'Основные',
-            statType: bind.statType || '',
-            enabled: !!bind.enabled,
-            lines: EDIT_LINES.map(l => ({ text: l.text, delay: l.delay }))
-        };
+function openFilterManager(){renderFilterSelector();openModal('filtersModal');}
+function renderFilterSelector(){const select=document.getElementById('filterExisting');const current=select.value;select.innerHTML='<option value="">Новый фильтр…</option>'+FILTERS.filter(f=>!f.builtin).map(f=>`<option value="${escapeHtml(f.name)}">${escapeHtml(f.name)}</option>`).join('');if(current&&FILTERS.some(f=>f.name===current&&!f.builtin))select.value=current;else select.value='';loadSelectedFilter();}
+function loadSelectedFilter(){const name=document.getElementById('filterExisting').value;const f=FILTERS.find(x=>x.name===name&&!x.builtin);filterOriginalName=f?f.name:'';document.getElementById('filterName').value=f?f.name:'';document.getElementById('filterCondition').value=f?f.condition:'';document.getElementById('deleteFilter').disabled=!f;}
+function saveFilter(){const name=document.getElementById('filterName').value.trim();const condition=document.getElementById('filterCondition').value.trim();if(!name){showToast('Введите название фильтра','warning');return;}if(condition&&!/^(category|enabled|empty|statType|hotkey)=.{1,120}(\&(category|enabled|empty|statType|hotkey)=.{1,120})*$/i.test(condition)){showToast('Проверьте формат условия. Пример: category=Лечение&enabled=true','warning');return;}post(['save_filter',name,condition,filterOriginalName].join(US));}
+function deleteFilter(){const name=document.getElementById('filterExisting').value;if(!name)return;if(!confirm('Удалить фильтр «'+name+'»?'))return;post(['delete_filter',name].join(US));}
 
-        // Сброс состояния захвата
-        pressedMods = { ctrl: false, alt: false, shift: false, win: false };
-        hkCaptureActive = false;
+const hotkeyLabels=[['overlay','Полный Overlay'],['miniOverlay','Mini Overlay'],['stopSending','Остановить отправку'],['replySms','Ответить на SMS'],['wheel','Радиальное меню (удерживать)'],['mainGui','Показать / скрыть окно']];
+function openSettings(){settingsDraftDirty=false;populateSettings();switchSettingsTab('general');openModal('settingsModal');}
+function populateSettings(){const h=SETTINGS.hotkeys||{};document.getElementById('chatKeyCapture').value=SETTINGS.chatKey||'t';document.getElementById('patientFormat').value=SETTINGS.patientFormat||'plain';document.getElementById('onlyGTA').checked=!!SETTINGS.onlyGTA;document.getElementById('baseDelay').value=SETTINGS.baseDelay??2300;document.getElementById('afterChatDelay').value=SETTINGS.afterChatDelay??300;document.getElementById('afterEnterDelay').value=SETTINGS.afterEnterDelay??400;document.getElementById('jitter').value=SETTINGS.jitter??200;document.getElementById('overlayOpacity').value=SETTINGS.overlayOpacity??245;document.getElementById('opacityValue').textContent=SETTINGS.overlayOpacity??245;document.getElementById('editorAutoSaveDelay').checked=!!SETTINGS.editorAutoSaveDelay;document.getElementById('notifySms').checked=!!SETTINGS.notifySms;document.getElementById('notifyMention').checked=!!SETTINGS.notifyMention;document.getElementById('notifyKeywords').checked=!!SETTINGS.notifyKeywords;document.getElementById('autoScreen').checked=!!SETTINGS.autoScreen;document.getElementById('enableWheel').checked=!!SETTINGS.enableWheel;
+ const grid=document.getElementById('hotkeySettingsGrid');grid.innerHTML=hotkeyLabels.map(([name,label])=>`<div class="system-hotkey-row"><label>${escapeHtml(label)}</label><div class="capture-setting"><input id="hk-${name}" readonly value="${escapeHtml(h[name]||'')}" data-setting-hotkey="${name}"><button class="hk-btn" data-capture="system:${name}" title="Захватить клавишу"><i class="fa-solid fa-keyboard"></i></button><button class="hk-btn clear" data-clear-capture="system:${name}" title="Очистить"><i class="fa-solid fa-eraser"></i></button></div><small class="system-hotkey-hint" id="hint-${name}"></small></div>`).join('');grid.querySelectorAll('[data-capture]').forEach(b=>b.onclick=()=>startCapture(b.dataset.capture,document.getElementById('hk-'+b.dataset.capture.slice(7))));grid.querySelectorAll('[data-clear-capture]').forEach(b=>b.onclick=()=>clearCapture(b.dataset.clearCapture));document.getElementById('chatKeyCapture').onclick=()=>startCapture('system:chatKey',document.getElementById('chatKeyCapture'));document.querySelector('[data-capture="system:chatKey"]').onclick=()=>startCapture('system:chatKey',document.getElementById('chatKeyCapture'));document.querySelector('[data-clear-capture="system:chatKey"]').onclick=()=>clearCapture('system:chatKey');
+ populateWheelSelects();settingsRuleRows=(SETTINGS.screenRules||[]).map(r=>({...r,_id:nextRuleRowId++}));renderScreenRules();updateSettingsHotkeyHints();}
+function populateWheelSelects(){const opts='<option value="0">— не назначено —</option>'+ALL_BINDS.map(b=>`<option value="${b.id}">[${b.id}] ${escapeHtml(b.name)}</option>`).join('');[['Top','top'],['Right','right'],['Bottom','bottom'],['Left','left']].forEach(([label,key])=>{const select=document.getElementById('wheel'+label);const old=select.value;select.innerHTML=opts;select.value=String(SETTINGS.wheel?.[key]??0);});}
+function renderScreenRules(){const list=document.getElementById('screenRulesList');if(!list)return;list.innerHTML='';if(!settingsRuleRows.length){list.innerHTML='<div class="hint-text">Правил пока нет. Добавьте фразу из чата и папку для скриншотов.</div>';return;}settingsRuleRows.forEach((r,i)=>{const row=document.createElement('div');row.className='screen-rule-row';row.dataset.id=r._id;row.innerHTML=`<input class="rule-name" maxlength="60" placeholder="Название" value="${escapeHtml(r.name||'')}"><input class="rule-phrase" maxlength="180" placeholder="Фраза-триггер из chatlog" value="${escapeHtml(r.phrase||'')}"><input class="rule-path" placeholder="Папка для скриншотов" value="${escapeHtml(r.path||'')}"><button class="btn-small" data-browse="${i}" title="Выбрать папку"><i class="fa-regular fa-folder-open"></i></button><button class="hk-btn clear" data-remove-rule="${i}" title="Удалить правило"><i class="fa-solid fa-trash"></i></button>`;row.querySelector('.rule-name').oninput=e=>{r.name=e.target.value;settingsDraftDirty=true;};row.querySelector('.rule-phrase').oninput=e=>{r.phrase=e.target.value;settingsDraftDirty=true;};row.querySelector('.rule-path').oninput=e=>{r.path=e.target.value;settingsDraftDirty=true;};row.querySelector('[data-browse]').onclick=()=>post('browse_folder:'+i);row.querySelector('[data-remove-rule]').onclick=()=>{settingsRuleRows.splice(i,1);settingsDraftDirty=true;renderScreenRules();};list.appendChild(row);});}
+function handleFolderSelected(message){const parts=message.slice('folder_selected:'.length).split(US);const i=Number(parts[0]);if(settingsRuleRows[i]){settingsRuleRows[i].path=parts[1]||'';settingsDraftDirty=true;renderScreenRules();}}
+function markSettingsDirty(){settingsDraftDirty=true;}
+function switchSettingsTab(tab){document.querySelectorAll('.settings-tabs button').forEach(b=>b.classList.toggle('active',b.dataset.settingsTab===tab));document.querySelectorAll('.settings-page').forEach(p=>p.classList.toggle('active',p.dataset.settingsPage===tab));}
+function applyDelayPreset(name){const preset={fast:[1200,150,200,50],norm:[2300,300,400,200],rp:[4500,600,800,500]}[name];if(!preset)return;['baseDelay','afterChatDelay','afterEnterDelay','jitter'].forEach((id,i)=>document.getElementById(id).value=preset[i]);markSettingsDirty();}
+function updateSettingsHotkeyHints(){const h={overlay:'Полный Overlay',miniOverlay:'Mini Overlay',stopSending:'Остановить отправку',replySms:'Ответить на SMS',wheel:'Радиальное меню',mainGui:'Главное окно'};const values={};hotkeyLabels.forEach(([name])=>values[name]=document.getElementById('hk-'+name)?.value||'');hotkeyLabels.forEach(([name,label])=>{const key=normalizeKey(values[name]);const el=document.getElementById('hint-'+name);const input=document.getElementById('hk-'+name);if(!el||!input)return;const conflict=hotkeyLabels.find(([other])=>other!==name&&key&&normalizeKey(values[other]).toLowerCase()===key.toLowerCase());const chat=key&&(normalizeKey(document.getElementById('chatKeyCapture').value).toLowerCase()===key.toLowerCase()||key.toLowerCase()==='sc029');const bind=key&&ALL_BINDS.find(b=>normalizeKey(b.hotkey).toLowerCase()===key.toLowerCase());if(conflict||chat||bind){el.textContent=conflict?'Конфликт с '+h[conflict[0]]:chat?'Конфликт с клавишей чата':`Занято биндом «${bind.name}»`;input.classList.add('conflict');}else{el.textContent=key?'Клавиша свободна':'Клавиша отключена';input.classList.remove('conflict');}});}
+function saveSettings(){const h={};hotkeyLabels.forEach(([name])=>h[name]=document.getElementById('hk-'+name).value.trim());const parts=['save_settings',document.getElementById('chatKeyCapture').value.trim(),document.getElementById('onlyGTA').checked?'1':'0',document.getElementById('patientFormat').value,document.getElementById('baseDelay').value,document.getElementById('afterChatDelay').value,document.getElementById('afterEnterDelay').value,document.getElementById('jitter').value,document.getElementById('overlayOpacity').value,document.getElementById('notifySms').checked?'1':'0',document.getElementById('notifyMention').checked?'1':'0',document.getElementById('notifyKeywords').checked?'1':'0',document.getElementById('editorAutoSaveDelay').checked?'1':'0',document.getElementById('autoScreen').checked?'1':'0',document.getElementById('enableWheel').checked?'1':'0',h.overlay,h.miniOverlay,h.stopSending,h.replySms,h.wheel,h.mainGui,document.getElementById('wheelTop').value,document.getElementById('wheelRight').value,document.getElementById('wheelBottom').value,document.getElementById('wheelLeft').value,String(settingsRuleRows.length)];settingsRuleRows.forEach(r=>parts.push((r.name||'').trim(),(r.phrase||'').trim(),(r.path||'').trim()));post(parts.join(US));}
 
-        updateHkHint();
-        renderVarsBar();
-        renderEditLines();
-        document.getElementById('editModal').style.display = 'flex';
-        setTimeout(() => document.getElementById('editName').focus(), 100);
-    }
+function openModal(id){document.getElementById(id).style.display='flex';}
+function closeModal(id){const node=document.getElementById(id);if(node)node.style.display='none';}
+function requestCloseModal(id){if(id==='settingsModal'&&settingsDraftDirty&&!confirm('Есть неприменённые настройки. Закрыть без применения?'))return;closeModal(id);}
+function isModalOpen(id){return document.getElementById(id)?.style.display==='flex';}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>requestCloseModal(b.dataset.close)));
+document.getElementById('btnClose').onclick=()=>sendWin('close');document.getElementById('btnMin').onclick=()=>sendWin('min');document.getElementById('btnMax').onclick=()=>sendWin('max');
+document.getElementById('btnSaveAll').onclick=()=>post('save_all');document.getElementById('btnUndo').onclick=()=>post('undo');document.getElementById('btnStopSending').onclick=()=>post('stop_sending');document.getElementById('btnStats').onclick=openStats;document.getElementById('btnHelp').onclick=openHelp;document.getElementById('btnFilters').onclick=openFilterManager;document.getElementById('btnManageFilters').onclick=openFilterManager;document.getElementById('btnVars').onclick=openVars;document.getElementById('btnCreate').onclick=()=>post('create_bind');document.getElementById('binderToggle').onchange=()=>post('toggle_binder');document.getElementById('openProfile').onclick=openProfile;document.getElementById('openPatient').onclick=openPatientModal;document.getElementById('searchInput').addEventListener('input',renderBinds);
+document.getElementById('editClose').onclick=()=>closeEditor();document.getElementById('cancelEditor').onclick=()=>closeEditor();document.getElementById('saveEditor').onclick=saveEditor;document.getElementById('undoAll').onclick=undoAll;document.getElementById('undoEditor').onclick=undoEditor;document.getElementById('addEditLine').onclick=addEditLine;document.getElementById('pinBtn').onclick=toggleVarsSticky;document.getElementById('applyDelayAll').onclick=applyDelayToAll;document.getElementById('delayPreset').onchange=e=>{if(e.target.value!=='')document.getElementById('applyDelayValue').value=e.target.value;};
+document.getElementById('editHotkey').onclick=()=>startCapture('bind',document.getElementById('editHotkey'));document.getElementById('editHotkey').onblur=()=>{if(activeCaptureTarget==='bind')stopCapture(true);};document.getElementById('hkUndo').onclick=()=>{pushEditorUndo();editorHotkey=previousEditorHotkey;document.getElementById('editHotkey').value=formatHotkey(editorHotkey);updateHotkeyHint();};document.getElementById('hkClear').onclick=()=>clearCapture('bind');
+function trackEditorField(id,property,eventName,readValue=el=>el.value){const el=document.getElementById(id);el.addEventListener('focus',()=>{el.dataset.undoPrev=String(readValue(el));});el.addEventListener(eventName,()=>{const previous=el.dataset.undoPrev;const current=String(readValue(el));if(previous!==undefined&&previous!==current){const snap=editorState();snap[property]=property==='enabled'?(previous==='true'):previous;pushEditorUndo(snap);}el.dataset.undoPrev=current;});}
+trackEditorField('editName','name','input');trackEditorField('editCategory','category','change');trackEditorField('editStatType','statType','change');trackEditorField('editEnabled','enabled','change',el=>el.checked);
+document.querySelectorAll('.command-tag').forEach(b=>{b.onmousedown=e=>e.preventDefault();b.onclick=()=>insertAtCaret(b.dataset.insert);});
+document.getElementById('varsClose').onclick=()=>closeModal('varsModal');document.getElementById('cancelVars').onclick=()=>closeModal('varsModal');document.getElementById('addVar').onclick=addVar;document.getElementById('saveVars').onclick=saveVars;
+document.getElementById('saveProfile').onclick=saveProfile;document.getElementById('profileAutofill').onclick=()=>post('profile_autofill');document.getElementById('savePatient').onclick=savePatient;document.getElementById('clearPatient').onclick=clearPatient;
+document.getElementById('resetStats').onclick=()=>{if(confirm('Сбросить все сохранённые счётчики статистики?'))post('reset_stats');};document.getElementById('filterExisting').onchange=loadSelectedFilter;document.getElementById('saveFilter').onclick=saveFilter;document.getElementById('deleteFilter').onclick=deleteFilter;
+document.querySelectorAll('[data-help-tab]').forEach(b=>b.onclick=()=>switchHelpTab(b.dataset.helpTab));document.querySelectorAll('[data-settings-tab]').forEach(b=>b.onclick=()=>switchSettingsTab(b.dataset.settingsTab));document.getElementById('saveSettings').onclick=saveSettings;document.getElementById('addScreenRule').onclick=()=>{settingsRuleRows.push({name:'Правило '+(settingsRuleRows.length+1),phrase:'',path:'',_id:nextRuleRowId++});settingsDraftDirty=true;renderScreenRules();};document.getElementById('testRadial').onclick=()=>post('show_radial');document.getElementById('showOverlay').onclick=()=>post('show_overlay');document.getElementById('showMiniOverlay').onclick=()=>post('show_mini_overlay');document.getElementById('importProfile').onclick=()=>post('import_profile');document.getElementById('exportProfile').onclick=()=>post('export_profile');document.getElementById('restoreBackup').onclick=()=>{if(confirm('Заменить config последней резервной копией?'))post('restore_backup');};document.getElementById('resetSettings').onclick=()=>{if(confirm('Вернуть системные настройки к значениям по умолчанию?'))post('reset_settings');};document.getElementById('resetBinds').onclick=()=>post('reset_binds');document.getElementById('clearAllBinds').onclick=()=>post('clear_all_binds');
+document.querySelectorAll('[data-delay-preset]').forEach(b=>b.onclick=()=>applyDelayPreset(b.dataset.delayPreset));
+document.getElementById('overlayOpacity').addEventListener('input',e=>{document.getElementById('opacityValue').textContent=e.target.value;markSettingsDirty();});document.getElementById('settingsModal').querySelectorAll('input,select').forEach(el=>{el.addEventListener('change',()=>{if(!el.matches('[data-capture],[data-clear-capture]'))markSettingsDirty();});el.addEventListener('input',()=>{if(el.id!=='overlayOpacity')markSettingsDirty();});});
 
-    function closeEditor() {
-        stopHkCapture();
-        document.getElementById('editModal').style.display = 'none';
-        EDIT_BIND_ID = null;
-        EDIT_LINES = [];
-        EDIT_SNAPSHOT = null;
-        lastFocusedLineInput = null;
-    }
+const hotkeyGrid=document.getElementById('hotkeySettingsGrid');hotkeyGrid.addEventListener('input',updateSettingsHotkeyHints);document.getElementById('chatKeyCapture').addEventListener('change',()=>{markSettingsDirty();updateSettingsHotkeyHints();});
+document.addEventListener('keydown',e=>{
+ if(activeCaptureTarget)return;
+ const editorOpen=isModalOpen('editModal');
+ if(e.key==='Escape'){
+  if(editorOpen){e.preventDefault();closeEditor();return;}
+  for(const id of ['varsModal','profileModal','patientModal','statsModal','helpModal','filtersModal','settingsModal'])if(isModalOpen(id)){e.preventDefault();requestCloseModal(id);return;}
+  if(!e.ctrlKey&&!e.altKey){e.preventDefault();sendWin('min');}return;
+ }
+ if(e.ctrlKey&&e.key.toLowerCase()==='k'){e.preventDefault();document.getElementById('searchInput').focus();return;}
+ if(e.ctrlKey&&e.key.toLowerCase()==='s'){e.preventDefault();if(editorOpen)saveEditor();else post('save_all');return;}
+ if(e.ctrlKey&&e.key.toLowerCase()==='z'){e.preventDefault();if(editorOpen)undoEditor();else post('undo');return;}
+ if(editorOpen&&e.ctrlKey&&e.key==='Enter'){e.preventDefault();saveEditor();return;}
+ if(editorOpen&&e.ctrlKey&&e.key.toLowerCase()==='d'){e.preventDefault();const active=document.activeElement;const i=active?.classList.contains('line-text')?Number(active.dataset.index):0;duplicateEditLine(i);return;}
+});
+document.addEventListener('click',e=>{if(e.target.classList.contains('modal-overlay')&&e.target.id!=='editModal'&&e.target.id!=='settingsModal')closeModal(e.target.id);});
 
-    function undoAll() {
-        if (!EDIT_SNAPSHOT) return;
-        if (!confirm('Откатить все изменения к состоянию при открытии?')) return;
-        document.getElementById('editName').value = EDIT_SNAPSHOT.name;
-        document.getElementById('editHotkey').value = formatHotkey(EDIT_SNAPSHOT.hotkey);
-        document.getElementById('editCategory').value = EDIT_SNAPSHOT.category;
-        document.getElementById('editStatType').value = EDIT_SNAPSHOT.statType;
-        document.getElementById('editEnabled').checked = EDIT_SNAPSHOT.enabled;
-        EDIT_LINES = EDIT_SNAPSHOT.lines.map(l => ({ text: l.text, delay: l.delay }));
-        hkCapturedKey = EDIT_SNAPSHOT.hotkey;
-        hkPreviousKey = EDIT_SNAPSHOT.hotkey;
-        lastFocusedLineInput = null;
-        renderEditLines();
-        updateHkHint();
-        showToast('Откат выполнен', 'success');
-    }
-
-    function toggleVarsSticky() {
-        varsSticky = !varsSticky;
-        const bar = document.getElementById('varsBar');
-        const btn = document.getElementById('pinBtn');
-        if (varsSticky) {
-            bar.classList.add('pinned');
-            btn.classList.add('active');
-            btn.title = 'Открепить панель переменных';
-        } else {
-            bar.classList.remove('pinned');
-            btn.classList.remove('active');
-            btn.title = 'Закрепить панель переменных';
-        }
-    }
-
-    function renderVarsBar() {
-        const bar = document.getElementById('varsBar');
-        let html = '<span>Вставить:</span>';
-        [{ tag: '{P}' }, { tag: '{MY}' }, { tag: '{HOSPITAL}' }, { tag: '{SPECIALTY}' }, { tag: '{RANK}' }].forEach(v => {
-            html += `<button class="tag-btn" onmousedown="event.preventDefault()" onclick="insertVar('${v.tag}')">${v.tag}</button>`;
-        });
-        USER_VARS.forEach(v => {
-            html += `<button class="tag-btn custom" onmousedown="event.preventDefault()" onclick="insertVar('{${v.name}}')">{${v.name}}</button>`;
-        });
-        bar.innerHTML = html;
-    }
-
-    function renderEditLines() {
-        const container = document.getElementById('editLinesList');
-        document.getElementById('editLinesCount').textContent = EDIT_LINES.length;
-        container.innerHTML = '';
-        EDIT_LINES.forEach((line, idx) => {
-            const el = document.createElement('div');
-            el.className = 'edit-line';
-            el.innerHTML = `
-                <div class="line-num">${idx+1}</div>
-                <input type="text" class="line-text" value="${escapeAttr(line.text)}" data-idx="${idx}" placeholder="Текст строки...">
-                <input type="number" class="line-delay" value="${line.delay}" data-idx="${idx}" min="0" step="100" title="мс">
-                <button class="move-btn" title="Вверх" onclick="moveEditLine(${idx}, -1)"><i class="fa-solid fa-arrow-up"></i></button>
-                <button class="move-btn" title="Вниз" onclick="moveEditLine(${idx}, 1)"><i class="fa-solid fa-arrow-down"></i></button>
-                <button title="Удалить" onclick="removeEditLine(${idx})"><i class="fa-solid fa-trash"></i></button>
-            `;
-            container.appendChild(el);
-        });
-        container.querySelectorAll('.line-text').forEach(inp => {
-            inp.addEventListener('input', e => {
-                const i = parseInt(e.target.dataset.idx);
-                EDIT_LINES[i].text = e.target.value;
-            });
-            inp.addEventListener('focus', e => {
-                lastFocusedLineInput = e.target;
-                updatePreview(parseInt(e.target.dataset.idx));
-            });
-        });
-        container.querySelectorAll('.line-delay').forEach(inp => {
-            inp.addEventListener('input', e => {
-                const i = parseInt(e.target.dataset.idx);
-                EDIT_LINES[i].delay = parseInt(e.target.value) || 0;
-            });
-        });
-    }
-
-    function addEditLine() {
-        EDIT_LINES.push({ text: '', delay: 2300 });
-        renderEditLines();
-        setTimeout(() => {
-            const list = document.getElementById('editLinesList');
-            list.scrollTop = list.scrollHeight;
-            const inputs = list.querySelectorAll('.line-text');
-            if (inputs.length) inputs[inputs.length-1].focus();
-        }, 50);
-    }
-    function removeEditLine(idx) {
-        if (EDIT_LINES.length <= 1) { showToast('Нельзя удалить последнюю', 'warning'); return; }
-        EDIT_LINES.splice(idx, 1);
-        renderEditLines();
-    }
-    function moveEditLine(idx, dir) {
-        const n = idx + dir;
-        if (n < 0 || n >= EDIT_LINES.length) return;
-        [EDIT_LINES[idx], EDIT_LINES[n]] = [EDIT_LINES[n], EDIT_LINES[idx]];
-        renderEditLines();
-    }
-
-    function insertVar(v) {
-        let target = document.activeElement;
-        if (!target || !target.classList.contains('line-text')) {
-            target = lastFocusedLineInput;
-        }
-
-        if (target && target.classList.contains('line-text')) {
-            const pos = (target.selectionStart !== null && target.selectionStart !== undefined)
-                ? target.selectionStart
-                : target.value.length;
-            const val = target.value;
-            target.value = val.slice(0, pos) + v + val.slice(pos);
-            const idx = parseInt(target.dataset.idx);
-            EDIT_LINES[idx].text = target.value;
-            target.focus();
-            const newPos = pos + v.length;
-            target.setSelectionRange(newPos, newPos);
-            updatePreview(idx);
-        } else {
-            showToast('Кликните в строку, чтобы вставить переменную', 'warning');
-        }
-    }
-
-    function updatePreview(idx) {
-        if (idx === undefined) {
-            document.getElementById('editPreview').innerHTML = '<strong>Предпросмотр:</strong> — выберите строку';
-            return;
-        }
-        if (idx < 0 || idx >= EDIT_LINES.length) return;
-        let text = EDIT_LINES[idx].text;
-        text = text.replace(/\{P\}/g, '[ID]');
-        text = text.replace(/\{MY\}/g, document.getElementById('profileName').textContent || '[Моё имя]');
-        text = text.replace(/\{HOSPITAL\}/g, 'MCLV');
-        text = text.replace(/\{SPECIALTY\}/g, 'Интерн');
-        text = text.replace(/\{RANK\}/g, '[Ранг]');
-        USER_VARS.forEach(v => {
-            const re = new RegExp('\\{' + v.name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '\\}', 'g');
-            text = text.replace(re, v.value || '[' + v.name + ']');
-        });
-        document.getElementById('editPreview').innerHTML = '<strong>Предпросмотр:</strong> ' + escapeHtml(text);
-    }
-
-    // ============================================
-    //  ЗАХВАТ ХОТКЕЯ — с отслеживанием модификаторов
-    // ============================================
-    const hkInput = document.getElementById('editHotkey');
-
-    hkInput.addEventListener('focus', startHkCapture);
-    hkInput.addEventListener('blur', endHkCapture);
-
-    function startHkCapture() {
-        hkCaptureActive = true;
-        hkInput.classList.add('capturing');
-        hkInput.classList.remove('conflict', 'reserved', 'empty-ok');
-        hkInput.placeholder = 'Нажмите комбинацию...';
-        hkInput.value = '';
-        hkCapturedKey = '';
-        pressedMods = { ctrl: false, alt: false, shift: false, win: false };
-
-        // Захват выполняется через AHK InputHook, поэтому WebView2 и браузер
-        // не могут перехватить Ctrl+1 / Alt+1 / Shift+1.
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('start_hk_capture');
-    }
-
-    function stopHkCapture() {
-        if (!hkCaptureActive) return;
-        hkCaptureActive = false;
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('stop_hk_capture');
-        if (hkCaptureTimer) { clearTimeout(hkCaptureTimer); hkCaptureTimer = null; }
-    }
-
-    function endHkCapture() {
-        if (!hkCaptureActive) return;
-        hkCaptureActive = false;
-        hkInput.classList.remove('capturing');
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage('stop_hk_capture');
-        if (hkCaptureTimer) { clearTimeout(hkCaptureTimer); hkCaptureTimer = null; }
-
-        if (!hkCapturedKey)
-            hkInput.value = formatHotkey(hkPreviousKey);
-        hkInput.placeholder = 'Кликните и нажмите клавиши...';
-        updateHkHint();
-    }
-
-    // Клавиатура для поля горячей клавиши захватывается AHK InputHook.
-    // DOM keydown/keyup здесь намеренно не используются: WebView2 может
-    // перехватывать системные accelerator-комбинации до DOM.
-
-    function updateCapturePreview() {
-        let mods = '';
-        if (pressedMods.ctrl)  mods += '^';
-        if (pressedMods.alt)   mods += '!';
-        if (pressedMods.shift) mods += '+';
-        if (pressedMods.win)   mods += '#';
-        if (mods) {
-            hkInput.value = formatModsDisplay(mods) + ' ...';
-        } else {
-            hkInput.value = '';
-        }
-    }
-
-    function formatModsDisplay(mods) {
-        let s = '';
-        if (mods.includes('^')) s += 'Ctrl + ';
-        if (mods.includes('!')) s += 'Alt + ';
-        if (mods.includes('+')) s += 'Shift + ';
-        if (mods.includes('#')) s += 'Win + ';
-        return s.replace(/ \+ $/, '');
-    }
-
-    function buildDisplay(mods, key) {
-        let s = '';
-        if (mods.includes('^')) s += 'Ctrl + ';
-        if (mods.includes('!')) s += 'Alt + ';
-        if (mods.includes('+')) s += 'Shift + ';
-        if (mods.includes('#')) s += 'Win + ';
-        return s + key;
-    }
-
-    function codeToAhk(code) {
-        if (!code) return '';
-        if (code.startsWith('Key')) return code.substring(3).toLowerCase();
-        if (code.startsWith('Digit')) return code.substring(5);
-        if (code.startsWith('Numpad')) {
-            const n = code.substring(6);
-            const map = {
-                'Add': 'NumpadAdd', 'Subtract': 'NumpadSub',
-                'Multiply': 'NumpadMult', 'Divide': 'NumpadDiv',
-                'Decimal': 'NumpadDot', 'Enter': 'NumpadEnter'
-            };
-            return map[n] || ('Numpad' + n);
-        }
-        if (/^F\d+$/.test(code)) return code;
-        const map = {
-            'ArrowUp': 'Up', 'ArrowDown': 'Down', 'ArrowLeft': 'Left', 'ArrowRight': 'Right',
-            'Enter': 'Enter', 'Tab': 'Tab', 'Backspace': 'Backspace',
-            'Delete': 'Delete', 'Insert': 'Insert', 'Home': 'Home', 'End': 'End',
-            'PageUp': 'PgUp', 'PageDown': 'PgDn', 'Space': 'Space',
-            'Minus': 'NumpadSub', 'Equal': '=', 'BracketLeft': '[', 'BracketRight': ']',
-            'Backslash': '\\', 'Semicolon': ';', 'Quote': "'",
-            'Comma': 'NumpadDot', 'Period': 'NumpadDot', 'Slash': 'NumpadDiv', 'Backquote': '`'
-        };
-        return map[code] || '';
-    }
-
-    function updateHkHint() {
-        const hint = document.getElementById('hkHint');
-        const val = hkCapturedKey;
-
-        if (!val) {
-            hkInput.classList.remove('conflict', 'reserved');
-            hkInput.classList.add('empty-ok');
-            hint.className = 'hk-hint ok';
-            hint.innerHTML = '<i class="fa-solid fa-circle-info"></i> Кликните в поле и нажмите комбинацию клавиш';
-            return;
-        }
-
-        hkInput.classList.remove('empty-ok');
-
-        const baseKey = val.replace(/[\^!+#]/g, '');
-        if (RESERVED_KEYS.includes(baseKey)) {
-            hkInput.classList.add('reserved');
-            hkInput.classList.remove('conflict');
-            hint.className = 'hk-hint reserved';
-            hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Клавиша ' + baseKey + ' используется игрой — может конфликтовать';
-            return;
-        }
-
-        const conflict = ALL_BINDS.find(b => b.id !== EDIT_BIND_ID && b.hotkey === val);
-        if (conflict) {
-            hkInput.classList.add('conflict');
-            hkInput.classList.remove('reserved');
-            hint.className = 'hk-hint conflict';
-            hint.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Занято биндом: <b>' + escapeHtml(conflict.name) + '</b> — при сохранении клавиша будет снята с него';
-            return;
-        }
-
-        hkInput.classList.remove('conflict', 'reserved');
-        hint.className = 'hk-hint ok';
-        hint.innerHTML = '<i class="fa-solid fa-circle-check"></i> Клавиша свободна';
-    }
-
-    function undoHotkey() {
-        if (!hkPreviousKey) { showToast('Нет предыдущего значения', 'warning'); return; }
-        hkCapturedKey = hkPreviousKey;
-        hkInput.value = formatHotkey(hkPreviousKey);
-        updateHkHint();
-        showToast('Возвращено: ' + formatHotkey(hkPreviousKey), 'info');
-    }
-
-    function clearHotkey() {
-        hkCapturedKey = '';
-        hkInput.value = '';
-        updateHkHint();
-    }
-
-    document.getElementById('editClose').onclick = closeEditor;
-
-    function saveEditor() {
-        if (!EDIT_BIND_ID) return;
-        const name = document.getElementById('editName').value.trim();
-        if (!name) { showToast('Введите название бинда', 'warning'); return; }
-        if (EDIT_LINES.length === 0) { showToast('Добавьте хотя бы одну строку', 'warning'); return; }
-
-        const conflict = ALL_BINDS.find(b => b.id !== EDIT_BIND_ID && b.hotkey === hkCapturedKey && hkCapturedKey);
-        if (conflict) {
-            if (!confirm('Клавиша занята биндом "' + conflict.name + '".\n\nПри сохранении клавиша будет снята с него. Продолжить?'))
-                return;
-        }
-
-        const US = '\x1F';
-        const parts = [
-            'save_bind',
-            String(EDIT_BIND_ID),
-            name,
-            hkCapturedKey,
-            document.getElementById('editCategory').value,
-            document.getElementById('editEnabled').checked ? '1' : '0',
-            document.getElementById('editStatType').value,
-            String(EDIT_LINES.length)
-        ];
-        EDIT_LINES.forEach(l => { parts.push(l.text); parts.push(String(l.delay)); });
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage(parts.join(US));
-    }
-
-    function openVarsEditor() {
-        renderVarsList();
-        document.getElementById('varsModal').style.display = 'flex';
-    }
-    function closeVarsEditor() {
-        document.getElementById('varsModal').style.display = 'none';
-    }
-
-    function renderVarsList() {
-        const list = document.getElementById('varsList');
-        list.innerHTML = '';
-        const builtin = [
-            { name: 'P', value: 'ID пациента (авто)' },
-            { name: 'MY', value: 'Моё имя (авто)' },
-            { name: 'HOSPITAL', value: 'Больница (авто)' },
-            { name: 'SPECIALTY', value: 'Специальность (авто)' },
-            { name: 'RANK', value: 'Ранг (авто)' }
-        ];
-        builtin.forEach(v => {
-            const row = document.createElement('div');
-            row.className = 'var-row reserved';
-            row.innerHTML = `
-                <span class="var-tag">{${v.name}}</span>
-                <i class="fa-solid fa-arrow-right var-arrow"></i>
-                <input type="text" value="${v.value}" readonly>
-                <span style="width: 24px;"></span>
-            `;
-            list.appendChild(row);
-        });
-        USER_VARS.forEach((v, i) => {
-            const row = document.createElement('div');
-            row.className = 'var-row';
-            row.innerHTML = `
-                <input type="text" class="var-name" value="${escapeAttr(v.name)}" placeholder="ИМЯ" style="max-width: 120px; font-family: 'Consolas', monospace; color: #00e676; text-align: center; font-weight: 600;" data-idx="${i}">
-                <i class="fa-solid fa-arrow-right var-arrow"></i>
-                <input type="text" class="var-value" value="${escapeAttr(v.value)}" placeholder="Значение" data-idx="${i}">
-                <button class="var-del" onclick="removeVarRow(${i})"><i class="fa-solid fa-trash"></i></button>
-            `;
-            list.appendChild(row);
-        });
-        list.querySelectorAll('.var-name').forEach(inp => {
-            inp.addEventListener('input', e => {
-                const i = parseInt(e.target.dataset.idx);
-                USER_VARS[i].name = e.target.value.toUpperCase().replace(/[^A-Z0-9_]/g, '');
-                e.target.value = USER_VARS[i].name;
-            });
-        });
-        list.querySelectorAll('.var-value').forEach(inp => {
-            inp.addEventListener('input', e => {
-                const i = parseInt(e.target.dataset.idx);
-                USER_VARS[i].value = e.target.value;
-            });
-        });
-    }
-
-    function addVarRow() {
-        USER_VARS.push({ name: '', value: '' });
-        renderVarsList();
-        setTimeout(() => {
-            const names = document.querySelectorAll('.var-name');
-            if (names.length) names[names.length-1].focus();
-        }, 50);
-    }
-
-    function removeVarRow(i) {
-        USER_VARS.splice(i, 1);
-        renderVarsList();
-    }
-
-    function saveVars() {
-        const reserved = ['P', 'MY', 'HOSPITAL', 'SPECIALTY', 'RANK'];
-        const seen = new Set();
-        for (let v of USER_VARS) {
-            if (!v.name) { showToast('У переменной пустое имя', 'warning'); return; }
-            if (reserved.includes(v.name.toUpperCase())) {
-                showToast('Имя "' + v.name + '" зарезервировано', 'warning'); return;
-            }
-            if (seen.has(v.name)) { showToast('Дубликат: ' + v.name, 'warning'); return; }
-            seen.add(v.name);
-        }
-        const US = '\x1F';
-        const parts = ['save_vars', String(USER_VARS.length)];
-        USER_VARS.forEach(v => { parts.push(v.name); parts.push(v.value); });
-        if (window.chrome && window.chrome.webview)
-            window.chrome.webview.postMessage(parts.join(US));
-        closeVarsEditor();
-    }
-
-    document.addEventListener('keydown', e => {
-        if (e.key === 'Escape') {
-            if (hkCaptureActive) return;
-            if (document.getElementById('editModal').style.display === 'flex') closeEditor();
-            if (document.getElementById('varsModal').style.display === 'flex') closeVarsEditor();
-        }
-    });
-
-    function escapeHtml(str) {
-        return String(str || '').replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-    }
-    function escapeAttr(str) { return escapeHtml(str); }
-    function formatHotkey(hk) {
-        if (!hk) return '—';
-        return hk
-            .replace(/\^/g, 'Ctrl+').replace(/!/g, 'Alt+').replace(/\+/g, 'Shift+').replace(/#/g, 'Win+')
-            .replace(/Numpad(\d)/, 'Num$1').replace(/NumpadAdd/, 'Num+')
-            .replace(/NumpadSub/, 'Num-').replace(/NumpadMult/, 'Num*').replace(/NumpadDiv/, 'Num/');
-    }
-
-    document.getElementById('searchInput').addEventListener('input', renderBinds);
+updateSettingsHotkeyHints();
 </script>
 </body>
 </html>
