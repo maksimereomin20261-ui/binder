@@ -1,0 +1,65 @@
+﻿[16:07:46] === LC START ===
+[16:07:46] Script: C:\Users\Administrator\Desktop\UniBind\UniBind.ahk
+[16:07:46] Size: 181573
+[16:07:46] AHK: 2.0.29
+[16:07:46] BUILD 2027.5 (debug keys, hk labels v2)
+[16:07:46] LC: profCount=1 (raw='1')
+[16:07:46] LC: профили перенумерованы 1..1
+[16:07:46] LC: active=1
+[16:07:46] LC: profiles=1 active=1 pid=1
+[16:07:46] LAP: idx=1 pf=C:\Users\Administrator\Desktop\UniBind\config\profiles\P1.ini exists=1
+[16:07:46] LAP: sections in file = 38
+[16:07:46] LAP: loadedCount=37
+[16:07:46] LAP: итог CATEGORIES.Length=7
+[16:07:46] LC: after load slots=100 cats=7
+[16:07:46] LC: hotkeys overlay=F10 stop=Backspace id=p mode=n
+[16:07:46] LC: DONE slots=100 cats=7 profiles=1
+[16:07:46] LC: вызов PushDataToHtml
+[16:07:46] PUSH: json_len=26324 cats=7 named_slots=37
+[16:07:46] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:46] LC: PushDataToHtml завершён
+[16:07:47] PUSH: json_len=26324 cats=7 named_slots=37
+[16:07:47] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:47] Slot hotkeys: 36
+[16:07:49] PUSH: json_len=26324 cats=7 named_slots=37
+[16:07:49] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:49] Slot hotkeys: 36
+[16:07:50] OverlayMoveSel: dir=-1 sel=10 total=36
+[16:07:50] OverlayMoveSel: NEW SEL=9
+[16:07:50] OverlayMoveSel: dir=-1 sel=10 total=36
+[16:07:50] OverlayMoveSel: NEW SEL=9
+[16:07:51] OverlayMoveSel: dir=1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=1
+[16:07:51] OverlayMoveSel: dir=-1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=9
+[16:07:51] OverlayMoveSel: dir=1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=1
+[16:07:51] OverlayMoveSel: dir=-1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=9
+[16:07:51] OverlayMoveSel: dir=1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=1
+[16:07:51] OverlayMoveSel: dir=-1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=9
+[16:07:51] OverlayMoveSel: dir=1 sel=10 total=36
+[16:07:51] OverlayMoveSel: NEW SEL=1
+[16:07:52] OverlayPage -1
+[16:07:52] OverlayPage 1
+[16:07:52] OverlayPage -1
+[16:07:52] OverlayPage 1
+[16:07:52] OverlayPage -1
+[16:07:52] OverlayPage 1
+[16:07:52] OverlayPage -1
+[16:07:55] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:55] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:55] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:55] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:56] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:56] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:56] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:56] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:56] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:56] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:07:57] PUSH: json_len=26322 cats=7 named_slots=37
+[16:07:57] PUSH: head={"profile":{"name":"","organization":"","rank":"","targetId":""},"binderEnabled":true,"profiles":{"active":1,"list":[{"label":"Медицинский профиль","name":"","organization":"","rank":""}]},"overlayVis
+[16:08:00] SaveProfilesToIni: count=1 (ожидалось 1)
+[16:08:00] Exit: Exit
