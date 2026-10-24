@@ -2774,6 +2774,14 @@ SafeGetKeyName(vk) {
         return StrLower(Chr(vk))
     if (vk >= 0x30 && vk <= 0x39)
         return Chr(vk)
+
+    ; Навигационные клавиши (стрелки, PgUp/PgDn, Home/End, Ins/Del):
+    ; GetKeyName("vkXX") для них может вернуть локализованное имя или пустую
+    ; строку в зависимости от раскладки — такие значения не проходят валидацию
+    ; хоткея. Используем канонические имена AHK.
+    if (vk >= 0x21 && vk <= 0x2E)
+        return MapNavigationVk(vk)
+
     try {
         name := GetKeyName(Format("vk{:02X}", vk))
     } catch {
@@ -2782,6 +2790,22 @@ SafeGetKeyName(vk) {
     if (name = "" || RegExMatch(name, "[^\x20-\x7E]"))
         return Format("vk{:02X}", vk)
     return name
+}
+
+MapNavigationVk(vk) {
+    switch vk {
+        case 0x21: return "PgUp"
+        case 0x22: return "PgDn"
+        case 0x23: return "End"
+        case 0x24: return "Home"
+        case 0x25: return "Left"
+        case 0x26: return "Up"
+        case 0x27: return "Right"
+        case 0x28: return "Down"
+        case 0x2D: return "Insert"
+        case 0x2E: return "Delete"
+    }
+    return Format("vk{:02X}", vk)
 }
 
 ; Безопасное преобразование в int.
@@ -4727,7 +4751,15 @@ StartOverlayIdInput() {
     OVERLAY_ID_HOOK.Start()
 }
 
-#HotIf OVERLAY_VISIBLE && !OVERLAY_EDIT_MODE && !OVERLAY_ID_INPUT_MODE && WinActive("ahk_exe gta_sa.exe")
+; Навигация по оверлею (↑↓ выбор бинда, PgUp/PgDn листать страницы,
+; Enter — запуск, 1-0 — быстрый выбор, Esc — скрыть, C — сброс ID).
+; Оверлей — AlwaysOnTop-окно с NoActivate/WS_EX_NOACTIVATE: он никогда не забирает
+; фокус у игры, поэтому требование WinActive("ahk_exe gta_sa.exe") здесь только
+; ломает навигацию (превью из настроек, потеря фокуса и т.п.) и не защищает от
+; набора текста в чате — пока оверлей_visible, пользователь взаимодействует с ним.
+; Ограничение «только в игре» оставлено для слот-хоткеев (RegisterAllHotkeys) и
+; хоткея режима (ToggleOverlayModeHotkey), где оно действительно нужно.
+#HotIf OVERLAY_VISIBLE && !OVERLAY_EDIT_MODE && !OVERLAY_ID_INPUT_MODE
 ~$c:: {
     global STATE, OVERLAY_CACHE
     STATE["targetId"] := ""
@@ -4803,8 +4835,6 @@ OverlayPage(dir) {
 }
 
 #HotIf
-~*Down:: LogLine("RAW Down: visible=" OVERLAY_VISIBLE " edit=" OVERLAY_EDIT_MODE " idmode=" OVERLAY_ID_INPUT_MODE " sel=" OVERLAY_SELECTED " page=" OVERLAY_PAGE "/" OVERLAY_MAX_PAGES " total=" OVERLAY_TOTAL)
-~*PgDn:: LogLine("RAW PgDn: visible=" OVERLAY_VISIBLE " page=" OVERLAY_PAGE "/" OVERLAY_MAX_PAGES)
 
 OverlayIdInputHandler(ih, vk, sc) {
     global OVERLAY_ID_INPUT, OVERLAY_ID_INPUT_MODE, OVERLAY_ID_HOOK, STATE, OverlayGui, OVERLAY_CACHE
