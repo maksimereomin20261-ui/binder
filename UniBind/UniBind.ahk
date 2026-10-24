@@ -1,4 +1,4 @@
-﻿; ============================================
+; ============================================
 ;  UniBind 2027 — Universal Binder
 ;  v2027.3 (универсальный биндер)
 ;  Биндер для GTA SAMP RP и любых других RP-серверов.
@@ -6,6 +6,27 @@
 #Requires AutoHotkey v2.0
 #SingleInstance Force
 #Warn All, Off
+
+; ============================================
+;  DPI-АВАРНОСТЬ (критично для масштабирования оверлея)
+; Без этого Windows на экранах с масштабом 125%+/150%+/200%
+; виртуализирует процесс: A_ScreenWidth/Height занижены,
+; окна размыты, координаты оверлея не верные.
+; ============================================
+try {
+    ; Windows 10 1607+ — предпочитаем Per-Monitor V2 (масштаб за монитором)
+    DllCall("shcore\SetThreadDpiAwarenessContext", "Ptr", -4, "Ptr")  ; DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2 = -4
+} catch {
+    try {
+        DllCall("shcore\SetProcessDpiAwareness", "Int", 2)           ; PROCESS_PER_MONITOR_DPI_AWARE = 2
+    } catch {
+        try {
+            DllCall("user32\SetProcessDPIAware")                     ; старший Windows-режим fallback
+        } catch {
+            ; Не смогли установить DPI-aware — продолжим без этого
+        }
+    }
+}
 #Include lib\WebView2\WebView2.ahk
 
 ; Админка — включается ТОЛЬКО если SA:MP запускается от админа.
@@ -3467,7 +3488,7 @@ LoadConfig() {
         CFG["overlayY"] := 20
         try CFG["overlayY"] := Integer(rs)
         catch
-        if (CFG["overlayY"] < 0 || CFG["overlayY"] > A_ScreenHeight - 100)
+        if (CFG["overlayY"] < -1 || CFG["overlayY"] > A_ScreenHeight - 100)
             CFG["overlayY"] := 20
 
         CFG["showIdInOverlay"]   := (IniRead(CONFIG_FILE, "Overlay", "showId", "1") = "1")
