@@ -4761,7 +4761,9 @@ StartOverlayIdInput() {
 ; хоткея режима (ToggleOverlayModeHotkey), где оно действительно нужно.
 #HotIf OVERLAY_VISIBLE && !OVERLAY_EDIT_MODE && !OVERLAY_ID_INPUT_MODE
 ~$c:: {
-    global STATE, OVERLAY_CACHE
+    global STATE, OVERLAY_CACHE, OVERLAY_VISIBLE, OVERLAY_EDIT_MODE, OVERLAY_ID_INPUT_MODE
+    if (!OVERLAY_VISIBLE || OVERLAY_EDIT_MODE || OVERLAY_ID_INPUT_MODE)
+        return
     STATE["targetId"] := ""
     OVERLAY_CACHE["patient"] := ""
     PushDataToHtml()
@@ -4794,6 +4796,9 @@ $0:: OverlayRunByNum(10)
 
 OverlayMoveSel(dir) {
     global OVERLAY_SELECTED, OVERLAY_TOTAL, OVERLAY_PAGE, OVERLAY_MAX_PAGES, OverlayGui
+    global OVERLAY_VISIBLE, OVERLAY_EDIT_MODE, OVERLAY_ID_INPUT_MODE
+    if (!OVERLAY_VISIBLE || OVERLAY_EDIT_MODE || OVERLAY_ID_INPUT_MODE)
+        return
     LogLine("OverlayMoveSel: dir=" dir " sel=" OVERLAY_SELECTED " total=" OVERLAY_TOTAL)
     if (OVERLAY_TOTAL = 0)
         return
@@ -4824,6 +4829,9 @@ OverlayMoveSel(dir) {
 
 OverlayPage(dir) {
     global OVERLAY_PAGE, OVERLAY_MAX_PAGES, OVERLAY_SELECTED, OverlayGui
+    global OVERLAY_VISIBLE, OVERLAY_EDIT_MODE, OVERLAY_ID_INPUT_MODE
+    if (!OVERLAY_VISIBLE || OVERLAY_EDIT_MODE || OVERLAY_ID_INPUT_MODE)
+        return
     LogLine("OverlayPage " dir)
     np := OVERLAY_PAGE + dir
     if (np < 1 || np > OVERLAY_MAX_PAGES)
@@ -4880,6 +4888,9 @@ OverlayIdInputHandler(ih, vk, sc) {
 
 OverlayRunSelected() {
     global OVERLAY_SELECTED, OVERLAY_PAGE, OVERLAY_BINDS, OVERLAY_TOTAL
+    global OVERLAY_VISIBLE, OVERLAY_EDIT_MODE, OVERLAY_ID_INPUT_MODE
+    if (!OVERLAY_VISIBLE || OVERLAY_EDIT_MODE || OVERLAY_ID_INPUT_MODE)
+        return
     globalIdx := (OVERLAY_PAGE - 1) * 10 + OVERLAY_SELECTED
     if (globalIdx >= 1 && globalIdx <= OVERLAY_TOTAL && OVERLAY_TOTAL > 0) {
         bind := OVERLAY_BINDS[globalIdx]
@@ -4890,6 +4901,9 @@ OverlayRunSelected() {
 
 OverlayRunByNum(n) {
     global OVERLAY_PAGE, OVERLAY_BINDS, OVERLAY_SELECTED, OVERLAY_TOTAL
+    global OVERLAY_VISIBLE, OVERLAY_EDIT_MODE, OVERLAY_ID_INPUT_MODE
+    if (!OVERLAY_VISIBLE || OVERLAY_EDIT_MODE || OVERLAY_ID_INPUT_MODE)
+        return
     OVERLAY_SELECTED := n
     UpdateOverlay()
     globalIdx := (OVERLAY_PAGE - 1) * 10 + n
